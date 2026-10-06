@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# environment / secrets
+.env
+.env.*
+!.env.example
+
+# build
+dist/
+build/
+
+# logs
+*.log
+npm-debug.log*
+
+# uploads (รูปสินค้าที่อัปโหลดตอนรัน)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
