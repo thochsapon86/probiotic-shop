@@ -7,7 +7,8 @@ const router = createRouter({
     { path: '/', name: 'landing', component: () => import('../views/LandingView.vue') },
     { path: '/login', name: 'login', component: () => import('../views/LoginView.vue'), meta: { guestOnly: true } },
     { path: '/register', name: 'register', component: () => import('../views/RegisterView.vue'), meta: { guestOnly: true } },
-    { path: '/admin/products', name: 'admin-products', component: () => import('../views/Adminproductsview.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/products', name: 'admin-products', component: () => import('../views/AdminProductsView.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/contact', name: 'contact', component: () => import('../views/ContactView.vue') },
     // หน้าถัดไป (ตัวอย่าง)
     // { path: '/products', component: ..., meta: { requiresAuth: true } },
     // { path: '/admin/products', component: ..., meta: { requiresAuth: true, requiresAdmin: true } },

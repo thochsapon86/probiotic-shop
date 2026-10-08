@@ -44,8 +44,9 @@ const steps = [
         </template>
         <template v-else>
           <RouterLink to="/login" class="px-3 py-2 hover:underline">เข้าสู่ระบบ</RouterLink>
-          <RouterLink to="/register"
-            class="bg-[#14532D] text-white rounded-full px-5 py-2 hover:bg-[#0f4023]">สมัครสมาชิก</RouterLink>
+          <RouterLink to="/register" class="bg-[#14532D] text-white rounded-full px-5 py-2 hover:bg-[#0f4023]">
+            สมัครสมาชิก</RouterLink>
+          <RouterLink to="/contact" class="px-3 py-2 hover:underline">ติดต่อเรา</RouterLink>
         </template>
       </nav>
     </header>
@@ -95,7 +96,8 @@ const steps = [
         </div>
         <div>
           <h2 class="font-bold text-lg">ข้อมูลปลอดภัย</h2>
-          <p class="mt-2 text-[#3E5A52] leading-relaxed">รหัสผ่านถูกเข้ารหัส และยืนยันตัวตนด้วยโทเคนทุกครั้งที่ใช้งาน</p>
+          <p class="mt-2 text-[#3E5A52] leading-relaxed">รหัสผ่านถูกเข้ารหัส และยืนยันตัวตนด้วยโทเคนทุกครั้งที่ใช้งาน
+          </p>
         </div>
       </div>
     </section>
@@ -130,7 +132,8 @@ const steps = [
         <h2 class="text-2xl md:text-3xl font-bold">สั่งซื้อง่ายใน 4 ขั้นตอน</h2>
         <ol class="mt-8 grid sm:grid-cols-2 md:grid-cols-4 gap-6">
           <li v-for="(s, i) in steps" :key="s.t">
-            <span class="inline-flex w-9 h-9 rounded-full bg-[#F2D96B] text-[#17302A] font-bold items-center justify-center">
+            <span
+              class="inline-flex w-9 h-9 rounded-full bg-[#F2D96B] text-[#17302A] font-bold items-center justify-center">
               {{ i + 1 }}
             </span>
             <h3 class="mt-3 font-bold">{{ s.t }}</h3>
@@ -149,13 +152,30 @@ const steps = [
 <style scoped>
 /* ลอยเบาๆ เฉพาะตอนโหลดหน้าแรก ปิดอัตโนมัติถ้าผู้ใช้ตั้งค่าลดการเคลื่อนไหว */
 @keyframes drift {
-  from { transform: translateY(8px) scale(0.97); }
-  to { transform: translateY(0) scale(1); }
+  from {
+    transform: translateY(8px) scale(0.97);
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+  }
 }
-.colony { animation: drift 1.2s ease-out both; }
-.colony:nth-child(2) { animation-delay: 0.15s; }
-.colony:nth-child(3) { animation-delay: 0.3s; }
+
+.colony {
+  animation: drift 1.2s ease-out both;
+}
+
+.colony:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.colony:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .colony { animation: none; }
+  .colony {
+    animation: none;
+  }
 }
 </style>
