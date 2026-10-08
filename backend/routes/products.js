@@ -11,19 +11,44 @@ const rules = [
   body("image_url").optional({ checkFalsy: true }).trim(),
 ];
 
-// GET /api/products?search=คำค้น  (ต้อง login, ใช้ทั้ง admin และลูกค้า)
+// GET /api/products?search=คำค้น&category=หมวด  (ต้อง login)
+// admin เห็นสินค้าทั้งหมด / ลูกค้าเห็นเฉพาะสินค้าที่เปิดขาย (is_active = 1)
 router.get("/", verifyToken, async (req, res) => {
   try {
     const search = (req.query.search || "").trim();
-    let sql = "SELECT id, name, description, price, stock, image_url FROM products";
+    const category = (req.query.category || "").trim();
+    const where = [];
     const params = [];
+
+    if (req.user.role !== "admin") where.push("is_active = 1");
     if (search) {
-      sql += " WHERE name LIKE ? OR description LIKE ? OR id = ?";
+      where.push("(name LIKE ? OR description LIKE ? OR id = ?)");
       params.push(`%${search}%`, `%${search}%`, Number(search) || 0);
     }
-    sql += " ORDER BY id DESC";
+    if (category) {
+      where.push("category = ?");
+      params.push(category);
+    }
+
+    const sql =
+      "SELECT id, name, description, price, stock, image_url, category, is_active FROM products" +
+      (where.length ? " WHERE " + where.join(" AND ") : "") +
+      " ORDER BY id DESC";
     const [rows] = await pool.query(sql, params);
     res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดของเซิร์ฟเวอร์" });
+  }
+});
+
+// GET /api/products/categories  (ต้องอยู่ก่อน /:id)
+router.get("/categories", verifyToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category <> '' AND is_active = 1 ORDER BY category"
+    );
+    res.json(rows.map((r) => r.category));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "เกิดข้อผิดพลาดของเซิร์ฟเวอร์" });
