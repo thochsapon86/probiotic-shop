@@ -56,12 +56,12 @@ onMounted(() => {
   loadCategories()
 })
 
-// TODO: Feature 3 จะเปลี่ยนเป็นเพิ่มลงออร์เดอร์ตามรหัสสินค้า (p.id)
+// TODO: Feature 3 จะเปลี่ยนเป็นเพิ่มลงออร์เดอร์ตามรหัสสินค้า (p.product_id)
 function selectProduct(p) {
   Swal.fire({
     icon: 'info',
     title: p.name,
-    text: `รหัสสินค้า ${p.id} · ระบบสั่งซื้อจะเปิดใช้งานในขั้นถัดไป`,
+    text: `รหัสสินค้า ${p.product_id} · ระบบสั่งซื้อจะเปิดใช้งานในขั้นถัดไป`,
     confirmButtonColor: '#14532D',
   })
 }
@@ -113,7 +113,7 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
       </p>
 
       <div v-else class="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <article v-for="p in products" :key="p.id" class="bg-white rounded-3xl p-5 flex flex-col">
+        <article v-for="p in products" :key="p.product_id" class="bg-white rounded-3xl p-5 flex flex-col">
           <div class="h-44 rounded-2xl bg-[#E3F0E6] overflow-hidden flex items-center justify-center">
             <img v-if="p.image_url" :src="p.image_url" :alt="p.name" class="w-full h-full object-cover" loading="lazy" />
             <span v-else class="text-[#14532D]/60 text-sm">ไม่มีรูปสินค้า</span>

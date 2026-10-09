@@ -48,7 +48,7 @@ function openAdd() {
 }
 
 function openEdit(p) {
-  editingId.value = p.id
+  editingId.value = p.product_id
   form.value = {
     name: p.name,
     description: p.description || '',
@@ -94,7 +94,7 @@ async function remove(p) {
   })
   if (!r.isConfirmed) return
   try {
-    await http.delete(`/products/${p.id}`)
+    await http.delete(`/products/${p.product_id}`)
     await loadProducts()
     Swal.fire({ icon: 'success', title: 'ลบสินค้าสำเร็จ', timer: 1200, showConfirmButton: false })
   } catch (e) {
@@ -151,8 +151,8 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
                 {{ search ? 'ไม่พบสินค้าที่ตรงกับคำค้นหา' : 'ยังไม่มีสินค้า กดปุ่ม "เพิ่มสินค้า" เพื่อเริ่มต้น' }}
               </td>
             </tr>
-            <tr v-for="p in products" :key="p.id" class="border-t">
-              <td class="px-4 py-3">{{ p.id }}</td>
+            <tr v-for="p in products" :key="p.product_id" class="border-t">
+              <td class="px-4 py-3">{{ p.product_id }}</td>
               <td class="px-4 py-3">
                 <div class="font-medium">{{ p.name }}</div>
                 <div class="text-xs text-gray-500 line-clamp-1">{{ p.description }}</div>

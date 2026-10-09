@@ -22,7 +22,7 @@ router.get("/", verifyToken, async (req, res) => {
 
     if (req.user.role !== "admin") where.push("is_active = 1");
     if (search) {
-      where.push("(name LIKE ? OR description LIKE ? OR id = ?)");
+      where.push("(name LIKE ? OR description LIKE ? OR product_id = ?)");
       params.push(`%${search}%`, `%${search}%`, Number(search) || 0);
     }
     if (category) {
@@ -31,9 +31,9 @@ router.get("/", verifyToken, async (req, res) => {
     }
 
     const sql =
-      "SELECT id, name, description, price, stock, image_url, category, is_active FROM products" +
+      "SELECT product_id, name, description, price, stock, image_url, category, is_active FROM products" +
       (where.length ? " WHERE " + where.join(" AND ") : "") +
-      " ORDER BY id DESC";
+      " ORDER BY product_id DESC";
     const [rows] = await pool.query(sql, params);
     res.json(rows);
   } catch (err) {
@@ -58,7 +58,7 @@ router.get("/categories", verifyToken, async (req, res) => {
 // GET /api/products/:id
 router.get("/:id", verifyToken, async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM products WHERE id = ?", [req.params.id]);
+    const [rows] = await pool.query("SELECT * FROM products WHERE product_id = ?", [req.params.id]);
     if (!rows[0]) return res.status(404).json({ message: "ไม่พบสินค้า" });
     res.json(rows[0]);
   } catch (err) {
@@ -78,7 +78,7 @@ router.post("/", verifyToken, requireAdmin, rules, async (req, res) => {
       "INSERT INTO products (name, description, price, stock, image_url) VALUES (?, ?, ?, ?, ?)",
       [name, description || null, price, stock, image_url || null]
     );
-    res.status(201).json({ message: "เพิ่มสินค้าสำเร็จ", id: r.insertId });
+    res.status(201).json({ message: "เพิ่มสินค้าสำเร็จ", product_id: r.insertId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "เกิดข้อผิดพลาดของเซิร์ฟเวอร์" });
@@ -93,7 +93,7 @@ router.put("/:id", verifyToken, requireAdmin, rules, async (req, res) => {
   const { name, description, price, stock, image_url } = req.body;
   try {
     const [r] = await pool.query(
-      "UPDATE products SET name=?, description=?, price=?, stock=?, image_url=? WHERE id=?",
+      "UPDATE products SET name=?, description=?, price=?, stock=?, image_url=? WHERE product_id=?",
       [name, description || null, price, stock, image_url || null, req.params.id]
     );
     if (r.affectedRows === 0) return res.status(404).json({ message: "ไม่พบสินค้า" });
@@ -107,7 +107,7 @@ router.put("/:id", verifyToken, requireAdmin, rules, async (req, res) => {
 // DELETE /api/products/:id  (admin)
 router.delete("/:id", verifyToken, requireAdmin, async (req, res) => {
   try {
-    const [r] = await pool.query("DELETE FROM products WHERE id = ?", [req.params.id]);
+    const [r] = await pool.query("DELETE FROM products WHERE product_id = ?", [req.params.id]);
     if (r.affectedRows === 0) return res.status(404).json({ message: "ไม่พบสินค้า" });
     res.json({ message: "ลบสินค้าสำเร็จ" });
   } catch (err) {
