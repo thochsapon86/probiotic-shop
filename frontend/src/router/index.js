@@ -12,6 +12,8 @@ const router = createRouter({
     { path: '/products', name: 'products', component: () => import('../views/ProductView.vue'), meta: { requiresAuth: true }, },
     { path: '/cart', name: 'cart', component: () => import('../views/CartView.vue'), meta: { requiresAuth: true } },
     { path: '/orders/:id', name: 'order-summary', component: () => import('../views/OrderSummaryView.vue'), meta: { requiresAuth: true } },
+    { path: '/orders/:id/pay', name: 'payment', component: () => import('../views/PaymentView.vue'), meta: { requiresAuth: true } },
+    { path: '/orders/:id/success', name: 'payment-success', component: () => import('../views/PaymentSuccessView.vue'), meta: { requiresAuth: true } },
     // หน้าถัดไป (ตัวอย่าง)
     // { path: '/products', component: ..., meta: { requiresAuth: true } },
     // { path: '/admin/products', component: ..., meta: { requiresAuth: true, requiresAdmin: true } },

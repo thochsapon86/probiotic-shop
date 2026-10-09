@@ -1,14 +1,7 @@
 <script setup>
-import { RouterLink, useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
+import AppNavbar from '../components/AppNavbar.vue'
 
-const auth = useAuthStore()
-const router = useRouter()
 
-function onLogout() {
-  auth.logout()
-  router.push('/login')
-}
 
 // TODO: แก้เป็นข้อมูลจริงของกลุ่ม
 const shop = {
@@ -27,21 +20,7 @@ const members = [
 
 <template>
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
-    <header class="max-w-6xl mx-auto flex items-center justify-between px-5 py-4">
-      <RouterLink to="/" class="text-xl font-bold text-[#14532D]">Probiotic Shop</RouterLink>
-      <nav class="flex items-center gap-3 text-sm">
-        <RouterLink to="/" class="hover:underline">หน้าแรก</RouterLink>
-        <template v-if="auth.isLoggedIn">
-          <button @click="onLogout" class="border border-[#14532D] text-[#14532D] rounded-full px-4 py-1.5 hover:bg-white">
-            ออกจากระบบ
-          </button>
-        </template>
-        <RouterLink v-else to="/login" class="px-5 py-2 hover:underline">
-          เข้าสู่ระบบ
-        </RouterLink>
-        <RouterLink to="/contact" class="bg-[#14532D] text-white rounded-full px-3 py-2 hover:bg-[#0f4023]">ติดต่อเรา</RouterLink>
-      </nav>
-    </header>
+    <AppNavbar />
 
     <main class="max-w-6xl mx-auto px-5 py-10">
       <h1 class="text-3xl md:text-4xl font-bold">ติดต่อเรา</h1>
