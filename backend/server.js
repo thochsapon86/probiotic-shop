@@ -1,4 +1,5 @@
 require("dotenv").config();
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -12,6 +13,13 @@ app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use(express.json());
 app.use(morgan("dev"));
+
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders: (res) => res.set("Cross-Origin-Resource-Policy", "cross-origin"),
+  })
+);
 
 app.get("/", (req, res) => {
   res.send("Probiotic Shop API");
@@ -30,6 +38,7 @@ app.get("/api/db-test", async (req, res) => {
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/products", require("./routes/products"));
 app.use("/api/orders", require("./routes/orders"));
+app.use("/api/payments", require("./routes/payments"));
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

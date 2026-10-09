@@ -1,6 +1,8 @@
 <script setup>
+import AppNavbar from '../components/AppNavbar.vue'
+import { imageSrc } from '../utils/imageUrl'
 import { ref, onMounted, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
 import http from '../api/http'
 import { useAuthStore } from '../stores/auth'
@@ -70,33 +72,13 @@ function selectProduct(p) {
   })
 }
 
-function onLogout() {
-  auth.logout()
-  router.push('/login')
-}
 
 const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2 })
 </script>
 
 <template>
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
-    <header class="bg-white border-b">
-      <div class="max-w-6xl mx-auto px-5 py-3 flex items-center justify-between">
-        <RouterLink to="/" class="text-lg font-bold text-[#14532D]">Probiotic Shop</RouterLink>
-        <nav class="flex items-center gap-3 text-sm">
-          <span class="hidden sm:inline text-[#3E5A52]">สวัสดี, {{ auth.user?.full_name || auth.user?.username }}</span>
-          <RouterLink v-if="auth.isAdmin" to="/admin/products" class="hover:underline">จัดการสินค้า</RouterLink>
-          <RouterLink to="/contact" class="hover:underline">ติดต่อเรา</RouterLink>
-          <RouterLink to="/cart" class="relative hover:underline">
-            ตะกร้า
-            <span v-if="cart.count" class="ml-1 bg-[#14532D] text-white text-xs rounded-full px-2 py-0.5">{{ cart.count }}</span>
-          </RouterLink>
-          <button @click="onLogout" class="border border-[#14532D] text-[#14532D] rounded-full px-4 py-1.5 hover:bg-[#F6F9F4]">
-            ออกจากระบบ
-          </button>
-        </nav>
-      </div>
-    </header>
+    <AppNavbar />
 
     <main class="max-w-6xl mx-auto px-5 py-8">
       <h1 class="text-3xl font-bold">สินค้าทั้งหมด</h1>
@@ -123,7 +105,7 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
       <div v-else class="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <article v-for="p in products" :key="p.product_id" class="bg-white rounded-3xl p-5 flex flex-col">
           <div class="h-44 rounded-2xl bg-[#E3F0E6] overflow-hidden flex items-center justify-center">
-            <img v-if="p.image_url" :src="p.image_url" :alt="p.name" class="w-full h-full object-cover" loading="lazy" />
+            <img v-if="p.image_url" :src="imageSrc(p.image_url)" :alt="p.name" class="w-full h-full object-cover" loading="lazy" />
             <span v-else class="text-[#14532D]/60 text-sm">ไม่มีรูปสินค้า</span>
           </div>
           <p v-if="p.category" class="mt-4 text-xs text-[#3E5A52]">{{ p.category }}</p>

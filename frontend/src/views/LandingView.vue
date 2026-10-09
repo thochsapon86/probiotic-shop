@@ -1,16 +1,13 @@
 <script setup>
+import AppNavbar from '../components/AppNavbar.vue'
+import { imageSrc } from '../utils/imageUrl'
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import http from '../api/http'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
-const router = useRouter()
 
-function onLogout() {
-  auth.logout()
-  router.push('/login')
-}
 
 // ---------- สินค้าแนะนำ (Carousel) ----------
 const featured = ref([])
@@ -89,27 +86,7 @@ const steps = [
 <template>
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <!-- Navbar -->
-    <header class="max-w-6xl mx-auto flex items-center justify-between px-5 py-4">
-      <RouterLink to="/" class="text-xl font-bold text-[#14532D]">Probiotic Shop</RouterLink>
-      <nav class="flex items-center gap-3 text-sm">
-        <template v-if="auth.isLoggedIn">
-          <span class="hidden sm:inline text-[#3E5A52]">สวัสดี, {{ auth.user?.full_name || auth.user?.username }}</span>
-          <RouterLink :to="auth.isAdmin ? '/admin/products' : '/products'"
-            class="bg-[#14532D] text-white rounded-full px-5 py-2 hover:bg-[#0f4023]">
-            {{ auth.isAdmin ? 'จัดการสินค้า' : 'ดูสินค้า' }}
-          </RouterLink>
-          <button type="button" @click="onLogout"
-            class="border border-[#14532D] text-[#14532D] rounded-full px-5 py-2 hover:bg-white">
-            ออกจากระบบ
-          </button>
-        </template>
-        <template v-else>
-          <RouterLink to="/login" class="px-3 py-2 hover:underline">เข้าสู่ระบบ</RouterLink>
-          <RouterLink to="/register"
-            class="bg-[#14532D] text-white rounded-full px-5 py-2 hover:bg-[#0f4023]">สมัครสมาชิก</RouterLink>
-        </template>
-      </nav>
-    </header>
+    <AppNavbar />
 
     <!-- Hero -->
     <section class="max-w-6xl mx-auto px-5 py-12 md:py-20 grid md:grid-cols-2 gap-10 items-center">
@@ -182,7 +159,7 @@ const steps = [
               :style="{ width: `${100 / perView}%` }">
               <article class="bg-white rounded-3xl p-6 flex flex-col h-full">
                 <div class="h-40 rounded-2xl bg-[#E3F0E6] overflow-hidden flex items-center justify-center">
-                  <img v-if="p.image_url" :src="p.image_url" :alt="p.name" class="w-full h-full object-cover" loading="lazy" />
+                  <img v-if="p.image_url" :src="imageSrc(p.image_url)" :alt="p.name" class="w-full h-full object-cover" loading="lazy" />
                   <span v-else class="text-sm text-[#14532D]/60">ไม่มีรูปสินค้า</span>
                 </div>
                 <p v-if="p.category" class="mt-4 text-xs text-[#3E5A52]">{{ p.category }}</p>

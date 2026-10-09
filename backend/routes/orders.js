@@ -95,4 +95,47 @@ router.get("/:id", verifyToken, async (req, res) => {
   }
 });
 
+// POST /api/orders/:id/cancel  ยกเลิกออร์เดอร์ที่ยังรอชำระเงิน และคืนสต็อก
+router.post("/:id/cancel", verifyToken, async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [rows] = await conn.query(
+      "SELECT order_id, user_id, status FROM orders WHERE order_id = ? FOR UPDATE",
+      [req.params.id]
+    );
+    const order = rows[0];
+    if (!order) {
+      await conn.rollback();
+      return res.status(404).json({ message: "ไม่พบออร์เดอร์" });
+    }
+    if (order.user_id !== req.user.user_id && req.user.role !== "admin") {
+      await conn.rollback();
+      return res.status(403).json({ message: "ไม่มีสิทธิ์ยกเลิกออร์เดอร์นี้" });
+    }
+    if (order.status !== "pending") {
+      await conn.rollback();
+      return res.status(400).json({ message: "ยกเลิกได้เฉพาะออร์เดอร์ที่รอชำระเงิน" });
+    }
+
+    const [items] = await conn.query(
+      "SELECT product_id, quantity FROM order_details WHERE order_id = ?",
+      [order.order_id]
+    );
+    for (const i of items) {
+      await conn.query("UPDATE products SET stock = stock + ? WHERE product_id = ?", [i.quantity, i.product_id]);
+    }
+    await conn.query("UPDATE orders SET status = 'cancelled' WHERE order_id = ?", [order.order_id]);
+
+    await conn.commit();
+    res.json({ message: "ยกเลิกออร์เดอร์แล้ว" });
+  } catch (err) {
+    await conn.rollback();
+    console.error(err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดของเซิร์ฟเวอร์" });
+  } finally {
+    conn.release();
+  }
+});
+
 module.exports = router;

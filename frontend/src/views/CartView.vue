@@ -1,4 +1,6 @@
 <script setup>
+import AppNavbar from '../components/AppNavbar.vue'
+import { imageSrc } from '../utils/imageUrl'
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import http from '../api/http'
@@ -34,25 +36,11 @@ async function checkout() {
   }
 }
 
-function onLogout() {
-  auth.logout()
-  router.push('/login')
-}
 </script>
 
 <template>
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
-    <header class="bg-white border-b">
-      <div class="max-w-4xl mx-auto px-5 py-3 flex items-center justify-between">
-        <RouterLink to="/" class="text-lg font-bold text-[#14532D]">Probiotic Shop</RouterLink>
-        <nav class="flex items-center gap-3 text-sm">
-          <RouterLink to="/products" class="hover:underline">เลือกสินค้าต่อ</RouterLink>
-          <button @click="onLogout" class="border border-[#14532D] text-[#14532D] rounded-full px-4 py-1.5 hover:bg-[#F6F9F4]">
-            ออกจากระบบ
-          </button>
-        </nav>
-      </div>
-    </header>
+    <AppNavbar />
 
     <main class="max-w-4xl mx-auto px-5 py-8">
       <h1 class="text-3xl font-bold">ตะกร้าสินค้า</h1>
@@ -68,7 +56,7 @@ function onLogout() {
         <div class="mt-6 bg-white rounded-3xl divide-y">
           <div v-for="i in cart.items" :key="i.product_id" class="p-4 flex flex-wrap items-center gap-4">
             <div class="w-16 h-16 rounded-xl bg-[#E3F0E6] overflow-hidden shrink-0">
-              <img v-if="i.image_url" :src="i.image_url" :alt="i.name" class="w-full h-full object-cover" />
+              <img v-if="i.image_url" :src="imageSrc(i.image_url)" :alt="i.name" class="w-full h-full object-cover" />
             </div>
             <div class="flex-1 min-w-[160px]">
               <div class="font-medium">{{ i.name }}</div>

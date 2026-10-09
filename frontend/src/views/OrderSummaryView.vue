@@ -1,4 +1,5 @@
 <script setup>
+import AppNavbar from '../components/AppNavbar.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import Swal from 'sweetalert2'
@@ -40,25 +41,33 @@ onMounted(async () => {
   }
 })
 
-// TODO: Feature 4 จะเปลี่ยนเป็นไปหน้าชำระเงิน /orders/:id/pay
 function goPay() {
-  Swal.fire({
-    icon: 'info',
-    title: 'หน้าชำระเงิน',
-    text: 'จะเปิดใช้งานใน Feature ถัดไป',
-    confirmButtonColor: '#14532D',
+  router.push(`/orders/${order.value.order_id}/pay`)
+}
+
+async function cancelOrder() {
+  const r = await Swal.fire({
+    icon: 'warning',
+    title: 'ยกเลิกออร์เดอร์นี้?',
+    text: 'สินค้าจะถูกคืนเข้าสต็อก',
+    showCancelButton: true,
+    confirmButtonText: 'ยกเลิกออร์เดอร์',
+    cancelButtonText: 'ไม่ยกเลิก',
+    confirmButtonColor: '#dc2626',
   })
+  if (!r.isConfirmed) return
+  try {
+    await http.post(`/orders/${order.value.order_id}/cancel`)
+    order.value.status = 'cancelled'
+  } catch (e) {
+    Swal.fire({ icon: 'error', title: 'ยกเลิกไม่สำเร็จ', text: e.response?.data?.message || '' })
+  }
 }
 </script>
 
 <template>
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
-    <header class="bg-white border-b">
-      <div class="max-w-3xl mx-auto px-5 py-3 flex items-center justify-between">
-        <RouterLink to="/" class="text-lg font-bold text-[#14532D]">Probiotic Shop</RouterLink>
-        <RouterLink to="/products" class="text-sm hover:underline">เลือกสินค้าต่อ</RouterLink>
-      </div>
-    </header>
+    <AppNavbar />
 
     <main class="max-w-3xl mx-auto px-5 py-8">
       <p v-if="loading" class="text-gray-500">กำลังโหลด...</p>
@@ -116,11 +125,21 @@ function goPay() {
           </table>
         </div>
 
-        <div class="mt-6 flex justify-end">
-          <button v-if="order.status === 'pending'" @click="goPay"
+        <div class="mt-6 flex flex-wrap justify-end gap-3">
+          <template v-if="order.status === 'pending'">
+            <button @click="cancelOrder"
+              class="border border-red-300 text-red-600 rounded-full px-6 py-3 hover:bg-red-50">
+              ยกเลิกออร์เดอร์
+            </button>
+            <button @click="goPay"
+              class="bg-[#14532D] text-white rounded-full px-8 py-3 font-medium hover:bg-[#0f4023]">
+              ชำระเงิน
+            </button>
+          </template>
+          <RouterLink v-else-if="order.status === 'paid'" :to="`/orders/${order.order_id}/success`"
             class="bg-[#14532D] text-white rounded-full px-8 py-3 font-medium hover:bg-[#0f4023]">
-            ชำระเงิน
-          </button>
+            ดูหลักฐานการชำระเงิน
+          </RouterLink>
         </div>
       </template>
     </main>
