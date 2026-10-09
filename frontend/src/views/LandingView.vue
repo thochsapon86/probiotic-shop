@@ -1,5 +1,5 @@
 <script setup>
-import AppNavbar from '../components/AppNavbar.vue'
+import AppNavbar from '../components/AppNavBar.vue'
 import { imageSrc } from '../utils/imageUrl'
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import http from '../api/http'
