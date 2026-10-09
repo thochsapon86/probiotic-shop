@@ -42,6 +42,24 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
+// GET /api/products/featured  (สาธารณะ ไม่ต้อง login ใช้แสดงบนหน้าแรก)
+// ตอนนี้ = สินค้าที่เปิดขายและมีสต็อก เรียงจากใหม่สุด สูงสุด 9 รายการ
+router.get("/featured", async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT product_id, name, description, price, stock, image_url, category
+       FROM products
+       WHERE is_active = 1 AND stock > 0
+       ORDER BY created_at DESC, product_id DESC
+       LIMIT 9`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดของเซิร์ฟเวอร์" });
+  }
+});
+
 // GET /api/products/categories  (ต้องอยู่ก่อน /:id)
 router.get("/categories", verifyToken, async (req, res) => {
   try {

@@ -4,8 +4,10 @@ import { RouterLink, useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
 import http from '../api/http'
 import { useAuthStore } from '../stores/auth'
+import { useCartStore } from '../stores/cart'
 
 const auth = useAuthStore()
+const cart = useCartStore()
 const router = useRouter()
 
 const products = ref([])
@@ -56,13 +58,15 @@ onMounted(() => {
   loadCategories()
 })
 
-// TODO: Feature 3 จะเปลี่ยนเป็นเพิ่มลงออร์เดอร์ตามรหัสสินค้า (p.product_id)
 function selectProduct(p) {
+  const ok = cart.add(p)
   Swal.fire({
-    icon: 'info',
-    title: p.name,
-    text: `รหัสสินค้า ${p.product_id} · ระบบสั่งซื้อจะเปิดใช้งานในขั้นถัดไป`,
-    confirmButtonColor: '#14532D',
+    toast: true,
+    position: 'top-end',
+    icon: ok ? 'success' : 'warning',
+    title: ok ? `เพิ่ม "${p.name}" ลงตะกร้าแล้ว` : 'เพิ่มไม่ได้ เพราะเกินจำนวนสต็อก',
+    showConfirmButton: false,
+    timer: 1500,
   })
 }
 
@@ -83,6 +87,10 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
           <span class="hidden sm:inline text-[#3E5A52]">สวัสดี, {{ auth.user?.full_name || auth.user?.username }}</span>
           <RouterLink v-if="auth.isAdmin" to="/admin/products" class="hover:underline">จัดการสินค้า</RouterLink>
           <RouterLink to="/contact" class="hover:underline">ติดต่อเรา</RouterLink>
+          <RouterLink to="/cart" class="relative hover:underline">
+            ตะกร้า
+            <span v-if="cart.count" class="ml-1 bg-[#14532D] text-white text-xs rounded-full px-2 py-0.5">{{ cart.count }}</span>
+          </RouterLink>
           <button @click="onLogout" class="border border-[#14532D] text-[#14532D] rounded-full px-4 py-1.5 hover:bg-[#F6F9F4]">
             ออกจากระบบ
           </button>
@@ -120,6 +128,7 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
           </div>
           <p v-if="p.category" class="mt-4 text-xs text-[#3E5A52]">{{ p.category }}</p>
           <h2 class="mt-1 font-bold text-lg">{{ p.name }}</h2>
+          <p class="text-xs text-[#3E5A52]">รหัสสินค้า #{{ p.product_id }}</p>
           <p class="mt-1 text-sm text-[#3E5A52] leading-relaxed flex-1 line-clamp-3">{{ p.description }}</p>
           <div class="mt-4 flex items-center justify-between">
             <div>

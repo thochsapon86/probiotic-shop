@@ -1,4 +1,6 @@
 <script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import http from '../api/http'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -10,12 +12,71 @@ function onLogout() {
   router.push('/login')
 }
 
-// ตัวอย่างข้อมูล (ภายหลังเปลี่ยนเป็นดึงจาก API /products)
-const featured = [
-  { name: 'Daily Gut Balance', desc: 'โพรไบโอติก 10 สายพันธุ์ สำหรับดูแลลำไส้ทุกวัน', price: 590, cfu: '20 พันล้าน CFU' },
-  { name: 'Kids Probio Powder', desc: 'ชนิดผง ละลายน้ำง่าย รสนมอ่อนๆ เหมาะกับเด็ก', price: 450, cfu: '5 พันล้าน CFU' },
-  { name: 'Immune Plus', desc: 'โพรไบโอติกผสมวิตามินซี และสังกะสี', price: 690, cfu: '30 พันล้าน CFU' },
-]
+// ---------- สินค้าแนะนำ (Carousel) ----------
+const featured = ref([])
+const loadingFeatured = ref(true)
+const perView = ref(3) // จำนวนการ์ดต่อหน้า: มือถือ 1 / แท็บเล็ต 2 / เดสก์ท็อป 3
+const page = ref(0)
+const paused = ref(false)
+
+const pageCount = computed(() => Math.max(1, Math.ceil(featured.value.length / perView.value)))
+// ตำแหน่งการ์ดแรกที่แสดง (หน้าสุดท้ายไม่ให้เลื่อนเกินจนเหลือที่ว่าง)
+const offset = computed(() =>
+  Math.min(page.value * perView.value, Math.max(0, featured.value.length - perView.value))
+)
+
+function updatePerView() {
+  const w = window.innerWidth
+  perView.value = w >= 1024 ? 3 : w >= 640 ? 2 : 1
+  if (page.value >= pageCount.value) page.value = 0
+}
+function goTo(i) {
+  const n = pageCount.value
+  page.value = ((i % n) + n) % n
+}
+const next = () => goTo(page.value + 1)
+const prev = () => goTo(page.value - 1)
+
+// เลื่อนอัตโนมัติทุก 4 วินาที หยุดเมื่อเอาเมาส์วาง/โฟกัส และไม่เลื่อนถ้าผู้ใช้ตั้งค่าลดการเคลื่อนไหว
+let timer
+function startAuto() {
+  stopAuto()
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  timer = setInterval(() => {
+    if (!paused.value && pageCount.value > 1) next()
+  }, 4000)
+}
+function stopAuto() {
+  clearInterval(timer)
+}
+
+// ปัดซ้าย-ขวาบนมือถือ
+let touchX = 0
+const onTouchStart = (e) => (touchX = e.touches[0].clientX)
+function onTouchEnd(e) {
+  const dx = e.changedTouches[0].clientX - touchX
+  if (Math.abs(dx) > 50) dx < 0 ? next() : prev()
+}
+
+const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2 })
+
+onMounted(async () => {
+  updatePerView()
+  window.addEventListener('resize', updatePerView)
+  try {
+    const { data } = await http.get('/products/featured')
+    featured.value = data
+  } catch {
+    featured.value = []
+  } finally {
+    loadingFeatured.value = false
+  }
+  startAuto()
+})
+onBeforeUnmount(() => {
+  stopAuto()
+  window.removeEventListener('resize', updatePerView)
+})
 
 const steps = [
   { t: 'สมัครสมาชิก', d: 'ตั้ง Username และ Password เพื่อเข้าสู่ระบบ' },
@@ -44,9 +105,8 @@ const steps = [
         </template>
         <template v-else>
           <RouterLink to="/login" class="px-3 py-2 hover:underline">เข้าสู่ระบบ</RouterLink>
-          <RouterLink to="/register" class="bg-[#14532D] text-white rounded-full px-5 py-2 hover:bg-[#0f4023]">
-            สมัครสมาชิก</RouterLink>
-          <RouterLink to="/contact" class="px-3 py-2 hover:underline">ติดต่อเรา</RouterLink>
+          <RouterLink to="/register"
+            class="bg-[#14532D] text-white rounded-full px-5 py-2 hover:bg-[#0f4023]">สมัครสมาชิก</RouterLink>
         </template>
       </nav>
     </header>
@@ -96,30 +156,62 @@ const steps = [
         </div>
         <div>
           <h2 class="font-bold text-lg">ข้อมูลปลอดภัย</h2>
-          <p class="mt-2 text-[#3E5A52] leading-relaxed">รหัสผ่านถูกเข้ารหัส และยืนยันตัวตนด้วยโทเคนทุกครั้งที่ใช้งาน
-          </p>
+          <p class="mt-2 text-[#3E5A52] leading-relaxed">รหัสผ่านถูกเข้ารหัส และยืนยันตัวตนด้วยโทเคนทุกครั้งที่ใช้งาน</p>
         </div>
       </div>
     </section>
 
-    <!-- Featured products -->
+    <!-- Featured products (Carousel) -->
     <section id="products" class="max-w-6xl mx-auto px-5 py-16">
-      <h2 class="text-2xl md:text-3xl font-bold">สินค้าแนะนำ</h2>
-      <div class="mt-8 grid md:grid-cols-3 gap-6">
-        <article v-for="p in featured" :key="p.name" class="bg-white rounded-3xl p-6 flex flex-col">
-          <div class="h-36 rounded-2xl bg-[#E3F0E6] flex items-end p-4">
-            <span class="text-sm font-medium text-[#14532D]">{{ p.cfu }}</span>
+      <div class="flex items-end justify-between gap-4">
+        <h2 class="text-2xl md:text-3xl font-bold">สินค้าแนะนำ</h2>
+        <RouterLink :to="auth.isLoggedIn ? '/products' : '/login'" class="text-sm text-[#14532D] hover:underline">
+          ดูสินค้าทั้งหมด
+        </RouterLink>
+      </div>
+
+      <p v-if="loadingFeatured" class="mt-8 text-gray-500">กำลังโหลดสินค้า...</p>
+      <p v-else-if="featured.length === 0" class="mt-8 text-gray-500">ยังไม่มีสินค้าแนะนำในขณะนี้</p>
+
+      <div v-else class="mt-8" @mouseenter="paused = true" @mouseleave="paused = false"
+        @focusin="paused = true" @focusout="paused = false">
+        <div class="overflow-hidden -mx-3" @touchstart.passive="onTouchStart" @touchend="onTouchEnd">
+          <div class="flex transition-transform duration-500 ease-out motion-reduce:transition-none"
+            :style="{ transform: `translateX(-${offset * (100 / perView)}%)` }">
+            <div v-for="p in featured" :key="p.product_id" class="shrink-0 px-3"
+              :style="{ width: `${100 / perView}%` }">
+              <article class="bg-white rounded-3xl p-6 flex flex-col h-full">
+                <div class="h-40 rounded-2xl bg-[#E3F0E6] overflow-hidden flex items-center justify-center">
+                  <img v-if="p.image_url" :src="p.image_url" :alt="p.name" class="w-full h-full object-cover" loading="lazy" />
+                  <span v-else class="text-sm text-[#14532D]/60">ไม่มีรูปสินค้า</span>
+                </div>
+                <p v-if="p.category" class="mt-4 text-xs text-[#3E5A52]">{{ p.category }}</p>
+                <h3 class="mt-1 font-bold text-lg">{{ p.name }}</h3>
+                <p class="mt-1 text-sm text-[#3E5A52] leading-relaxed flex-1 line-clamp-3">{{ p.description }}</p>
+                <div class="mt-4 flex items-center justify-between">
+                  <div>
+                    <div class="text-xl font-bold">฿{{ baht(p.price) }}</div>
+                    <div v-if="p.stock <= 5" class="text-xs text-amber-700">เหลือ {{ p.stock }} ชิ้น</div>
+                  </div>
+                  <RouterLink :to="auth.isLoggedIn ? '/products' : '/login'"
+                    class="text-sm bg-[#14532D] text-white rounded-full px-4 py-2 hover:bg-[#0f4023]">
+                    สั่งซื้อ
+                  </RouterLink>
+                </div>
+              </article>
+            </div>
           </div>
-          <h3 class="mt-4 font-bold text-lg">{{ p.name }}</h3>
-          <p class="mt-1 text-sm text-[#3E5A52] leading-relaxed flex-1">{{ p.desc }}</p>
-          <div class="mt-4 flex items-center justify-between">
-            <span class="text-xl font-bold">฿{{ p.price.toLocaleString() }}</span>
-            <RouterLink :to="auth.isLoggedIn ? '/products' : '/login'"
-              class="text-sm bg-[#14532D] text-white rounded-full px-4 py-2 hover:bg-[#0f4023]">
-              สั่งซื้อ
-            </RouterLink>
-          </div>
-        </article>
+        </div>
+
+        <!-- จุดบอกตำแหน่ง (pagination dots) -->
+        <div v-if="pageCount > 1" class="mt-6 flex justify-center">
+          <button v-for="i in pageCount" :key="i" type="button" @click="goTo(i - 1)"
+            :aria-label="`ไปยังสินค้าชุดที่ ${i}`" :aria-current="page === i - 1 ? 'true' : undefined"
+            class="p-1.5">
+            <span class="block h-2.5 rounded-full transition-all duration-300"
+              :class="page === i - 1 ? 'w-6 bg-[#14532D]' : 'w-2.5 bg-[#14532D]/30 hover:bg-[#14532D]/60'"></span>
+          </button>
+        </div>
       </div>
       <p v-if="!auth.isLoggedIn" class="mt-6 text-sm text-[#3E5A52]">
         ต้องเข้าสู่ระบบก่อนจึงจะสั่งซื้อได้
@@ -132,8 +224,7 @@ const steps = [
         <h2 class="text-2xl md:text-3xl font-bold">สั่งซื้อง่ายใน 4 ขั้นตอน</h2>
         <ol class="mt-8 grid sm:grid-cols-2 md:grid-cols-4 gap-6">
           <li v-for="(s, i) in steps" :key="s.t">
-            <span
-              class="inline-flex w-9 h-9 rounded-full bg-[#F2D96B] text-[#17302A] font-bold items-center justify-center">
+            <span class="inline-flex w-9 h-9 rounded-full bg-[#F2D96B] text-[#17302A] font-bold items-center justify-center">
               {{ i + 1 }}
             </span>
             <h3 class="mt-3 font-bold">{{ s.t }}</h3>
@@ -152,30 +243,13 @@ const steps = [
 <style scoped>
 /* ลอยเบาๆ เฉพาะตอนโหลดหน้าแรก ปิดอัตโนมัติถ้าผู้ใช้ตั้งค่าลดการเคลื่อนไหว */
 @keyframes drift {
-  from {
-    transform: translateY(8px) scale(0.97);
-  }
-
-  to {
-    transform: translateY(0) scale(1);
-  }
+  from { transform: translateY(8px) scale(0.97); }
+  to { transform: translateY(0) scale(1); }
 }
-
-.colony {
-  animation: drift 1.2s ease-out both;
-}
-
-.colony:nth-child(2) {
-  animation-delay: 0.15s;
-}
-
-.colony:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
+.colony { animation: drift 1.2s ease-out both; }
+.colony:nth-child(2) { animation-delay: 0.15s; }
+.colony:nth-child(3) { animation-delay: 0.3s; }
 @media (prefers-reduced-motion: reduce) {
-  .colony {
-    animation: none;
-  }
+  .colony { animation: none; }
 }
 </style>

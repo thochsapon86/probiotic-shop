@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import http from '../api/http'
+import { useCartStore } from './cart'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -23,6 +24,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       localStorage.removeItem('token')
       localStorage.removeItem('user')
-    },
+      useCartStore().clear()
+  },
   },
 })
