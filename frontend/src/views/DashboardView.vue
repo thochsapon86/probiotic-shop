@@ -2,8 +2,20 @@
 import AppNavbar from '../components/AppNavBar.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { Bar } from 'vue-chartjs'
+import {
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  Title,
+  Tooltip,
+} from 'chart.js'
 import http from '../api/http'
 import { useAuthStore } from '../stores/auth'
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -26,9 +38,34 @@ function setDefaultRange() {
   to.value = toDateInput(today)
 }
 
-const maxSales = computed(() => Math.max(...dailySales.value.map((item) => item.total_sales), 1))
 const baht = (value) => Number(value || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })
 const shortDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
+const chartData = computed(() => ({
+  labels: dailySales.value.map((item) => shortDate(item.date)),
+  datasets: [{
+    label: 'ยอดขาย (บาท)',
+    data: dailySales.value.map((item) => item.total_sales),
+    backgroundColor: '#14532D',
+    borderRadius: 8,
+    maxBarThickness: 48,
+  }],
+}))
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    title: { display: false },
+    tooltip: { callbacks: { label: (context) => ` ฿${baht(context.raw)}` } },
+  },
+  scales: {
+    x: { grid: { display: false } },
+    y: {
+      beginAtZero: true,
+      ticks: { callback: (value) => `฿${Number(value).toLocaleString('th-TH')}` },
+    },
+  },
+}
 
 async function loadDashboard() {
   error.value = ''
@@ -105,14 +142,8 @@ onMounted(() => {
             <span class="text-sm text-[#3E5A52]">{{ from }} ถึง {{ to }}</span>
           </div>
           <p v-if="dailySales.length === 0" class="mt-8 text-center text-gray-500">ยังไม่มีข้อมูลยอดขายในช่วงเวลานี้</p>
-          <div v-else class="mt-6 space-y-4">
-            <div v-for="item in dailySales" :key="item.date" class="grid grid-cols-[4rem_1fr_6rem] items-center gap-3 text-sm">
-              <span>{{ shortDate(item.date) }}</span>
-              <div class="h-7 bg-[#E3F0E6] rounded-full overflow-hidden" :title="`฿${baht(item.total_sales)}`">
-                <div class="h-full bg-[#14532D] rounded-full" :style="{ width: `${(item.total_sales / maxSales) * 100}%` }"></div>
-              </div>
-              <span class="text-right font-medium">฿{{ baht(item.total_sales) }}</span>
-            </div>
+          <div v-else class="mt-6 h-80">
+            <Bar :data="chartData" :options="chartOptions" />
           </div>
         </section>
       </template>
