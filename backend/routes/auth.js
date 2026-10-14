@@ -1,10 +1,31 @@
 const router = require("express").Router();
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 const rateLimit = require("express-rate-limit");
 const { body, validationResult } = require("express-validator");
 const pool = require("../db");
 const { verifyToken } = require("../middleware/auth");
+
+const resetPasswordRules = [
+  body("password")
+    .isLength({ min: 8 }).withMessage("Password ต้องมีอย่างน้อย 8 ตัวอักษร")
+    .matches(/[a-z]/).withMessage("Password ต้องมีตัวพิมพ์เล็ก")
+    .matches(/[A-Z]/).withMessage("Password ต้องมีตัวพิมพ์ใหญ่")
+    .matches(/[0-9]/).withMessage("Password ต้องมีตัวเลข")
+    .matches(/[^A-Za-z0-9]/).withMessage("Password ต้องมีอักขระพิเศษ"),
+];
+
+function createMailer() {
+  if (!process.env.SMTP_HOST) return null;
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
+  });
+}
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -45,6 +66,74 @@ router.post(
 )
 
 router.get('/me', verifyToken, (req, res) => res.json(req.user))
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { message: "กรุณาลองใหม่ภายหลัง" },
+});
+
+// ไม่เปิดเผยว่า email มีบัญชีอยู่หรือไม่ เพื่อป้องกันการไล่ตรวจรายชื่อผู้ใช้
+router.post("/forgot-password", forgotPasswordLimiter, [body("email").trim().isEmail().normalizeEmail()], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ message: "รูปแบบอีเมลไม่ถูกต้อง" });
+
+  const genericMessage = "หากอีเมลนี้ลงทะเบียนไว้ ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ให้";
+  try {
+    const [rows] = await pool.query("SELECT user_id, email FROM users WHERE email = ?", [req.body.email]);
+    if (!rows[0]) return res.json({ message: genericMessage });
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    await pool.query(
+      "UPDATE users SET reset_token = ?, reset_token_expires = DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE user_id = ?",
+      [tokenHash, rows[0].user_id]
+    );
+
+    const resetUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/reset-password?token=${rawToken}`;
+    const mailer = createMailer();
+    if (mailer) {
+      await mailer.sendMail({
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+        to: req.body.email,
+        subject: "รีเซ็ตรหัสผ่าน Probiotic Shop",
+        text: `เปิดลิงก์นี้เพื่อตั้งรหัสผ่านใหม่ (ลิงก์มีอายุ 15 นาที): ${resetUrl}`,
+      });
+    } else if (process.env.NODE_ENV !== "production") {
+      console.info(`[password-reset] ${req.body.email}: ${resetUrl}`);
+    } else {
+      return res.status(503).json({ message: "ระบบส่งอีเมลยังไม่พร้อมใช้งาน" });
+    }
+    res.json({ message: genericMessage });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "ไม่สามารถส่งคำขอ reset password ได้" });
+  }
+});
+
+router.post("/reset-password", [body("token").isHexadecimal().isLength({ min: 64, max: 64 }), ...resetPasswordRules], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ message: errors.array()[0].msg || "ข้อมูลไม่ถูกต้อง" });
+
+  const tokenHash = crypto.createHash("sha256").update(req.body.token).digest("hex");
+  try {
+    const [rows] = await pool.query(
+      "SELECT user_id FROM users WHERE reset_token = ? AND reset_token_expires > NOW()",
+      [tokenHash]
+    );
+    if (!rows[0]) return res.status(400).json({ message: "ลิงก์ reset password ไม่ถูกต้องหรือหมดอายุแล้ว" });
+
+    const passwordHash = await bcrypt.hash(req.body.password, 10);
+    await pool.query(
+      "UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE user_id = ?",
+      [passwordHash, rows[0].user_id]
+    );
+    res.json({ message: "ตั้งรหัสผ่านใหม่สำเร็จ กรุณาเข้าสู่ระบบ" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "ไม่สามารถตั้งรหัสผ่านใหม่ได้" });
+  }
+});
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
