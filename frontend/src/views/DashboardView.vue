@@ -25,6 +25,7 @@ const from = ref('')
 const to = ref('')
 const summary = ref({ paid_orders: 0, total_sales: 0, average_order_value: 0 })
 const dailySales = ref([])
+const productSales = ref([])
 
 function toDateInput(date) {
   return date.toISOString().slice(0, 10)
@@ -66,6 +67,33 @@ const chartOptions = {
     },
   },
 }
+const productChartData = computed(() => ({
+  labels: productSales.value.map((item) => item.product_name),
+  datasets: [{
+    label: 'ยอดขายสินค้า (บาท)',
+    data: productSales.value.map((item) => item.total_sales),
+    backgroundColor: '#3E7B5A',
+    borderRadius: 8,
+    maxBarThickness: 34,
+  }],
+}))
+const productChartOptions = {
+  indexAxis: 'y',
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    title: { display: false },
+    tooltip: { callbacks: { label: (context) => ` ฿${baht(context.raw)}` } },
+  },
+  scales: {
+    x: {
+      beginAtZero: true,
+      ticks: { callback: (value) => `฿${Number(value).toLocaleString('th-TH')}` },
+    },
+    y: { grid: { display: false } },
+  },
+}
 
 async function loadDashboard() {
   error.value = ''
@@ -74,6 +102,7 @@ async function loadDashboard() {
     const { data } = await http.get('/dashboard/sales', { params: { from: from.value, to: to.value } })
     summary.value = data.summary
     dailySales.value = data.daily_sales
+    productSales.value = data.product_sales
   } catch (e) {
     if (e.response?.status === 401) {
       auth.logout()
@@ -144,6 +173,39 @@ onMounted(() => {
           <p v-if="dailySales.length === 0" class="mt-8 text-center text-gray-500">ยังไม่มีข้อมูลยอดขายในช่วงเวลานี้</p>
           <div v-else class="mt-6 h-80">
             <Bar :data="chartData" :options="chartOptions" />
+          </div>
+        </section>
+
+        <section class="mt-6 grid lg:grid-cols-2 gap-6">
+          <div class="bg-white rounded-2xl p-5">
+            <h2 class="font-bold text-lg">ยอดขายแยกตามสินค้า</h2>
+            <p v-if="productSales.length === 0" class="mt-8 text-center text-gray-500">ยังไม่มีข้อมูลการขายสินค้า</p>
+            <div v-else class="mt-6 h-80">
+              <Bar :data="productChartData" :options="productChartOptions" />
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 overflow-hidden">
+            <h2 class="font-bold text-lg">รายละเอียดสินค้า</h2>
+            <p v-if="productSales.length === 0" class="mt-8 text-center text-gray-500">ยังไม่มีข้อมูลการขายสินค้า</p>
+            <div v-else class="mt-4 overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="text-left text-[#3E5A52] border-b">
+                  <tr>
+                    <th class="py-2 pr-3">สินค้า</th>
+                    <th class="py-2 px-3 text-right">ขายได้</th>
+                    <th class="py-2 pl-3 text-right">ยอดขาย</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y">
+                  <tr v-for="item in productSales" :key="item.product_id">
+                    <td class="py-3 pr-3">{{ item.product_name }}</td>
+                    <td class="py-3 px-3 text-right">{{ item.sold_quantity.toLocaleString('th-TH') }}</td>
+                    <td class="py-3 pl-3 text-right font-medium">฿{{ baht(item.total_sales) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </template>

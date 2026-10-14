@@ -56,6 +56,22 @@ router.get("/sales", verifyToken, requireAdmin, async (req, res) => {
       [from, to]
     );
 
+    const [productRows] = await pool.query(
+      `SELECT d.product_id,
+              COALESCE(p.name, CONCAT('สินค้า #', d.product_id)) AS product_name,
+              SUM(d.quantity) AS sold_quantity,
+              COALESCE(SUM(d.quantity * d.price_at_order), 0) AS total_sales
+       FROM payments pay
+       JOIN order_details d ON d.order_id = pay.order_id
+       LEFT JOIN products p ON p.product_id = d.product_id
+       WHERE pay.payment_status = 'success'
+         AND pay.payment_date >= ?
+         AND pay.payment_date < DATE_ADD(?, INTERVAL 1 DAY)
+       GROUP BY d.product_id, p.name
+       ORDER BY total_sales DESC, sold_quantity DESC`,
+      [from, to]
+    );
+
     res.json({
       from,
       to,
@@ -70,6 +86,12 @@ router.get("/sales", verifyToken, requireAdmin, async (req, res) => {
           ? row.sale_date.toISOString().slice(0, 10)
           : String(row.sale_date).slice(0, 10),
         order_count: Number(row.order_count),
+        total_sales: Number(row.total_sales),
+      })),
+      product_sales: productRows.map((row) => ({
+        product_id: Number(row.product_id),
+        product_name: row.product_name,
+        sold_quantity: Number(row.sold_quantity),
         total_sales: Number(row.total_sales),
       })),
     });
