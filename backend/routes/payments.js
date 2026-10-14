@@ -119,7 +119,8 @@ router.get("/order/:orderId/receipt", verifyToken, async (req, res) => {
     );
 
     const doc = new PDFDocument({ size: "A4", margin: 50 });
-    const fontPath = process.env.PDF_FONT_PATH;
+    // ใช้ฟอนต์ที่รองรับภาษาไทยบน Windows หากไม่ได้กำหนด path เอง
+    const fontPath = process.env.PDF_FONT_PATH || "C:\\Windows\\Fonts\\arial.ttf";
     if (fontPath && fs.existsSync(fontPath)) doc.font(fontPath);
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename=receipt-order-${payment.order_id}.pdf`);
