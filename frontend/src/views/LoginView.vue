@@ -63,7 +63,7 @@ async function onSubmit() {
       </button>
 
       <div class="flex justify-between text-sm">
-        <a href="#" class="text-green-700">ลืมรหัสผ่าน?</a>
+        <RouterLink to="/forgot-password" class="text-green-700">ลืมรหัสผ่าน?</RouterLink>
         <RouterLink to="/register" class="text-green-700">สมัครสมาชิก</RouterLink>
       </div>
     </form>
