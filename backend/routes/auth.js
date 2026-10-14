@@ -69,7 +69,8 @@ router.get('/me', verifyToken, (req, res) => res.json(req.user))
 
 const forgotPasswordLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 5,
+  // demo/local ให้ทดสอบซ้ำได้มากขึ้น แต่ production ยังคงจำกัดไว้ 5 ครั้ง/ชั่วโมง
+  max: Number(process.env.FORGOT_PASSWORD_MAX || (process.env.NODE_ENV === "production" ? 5 : 20)),
   message: { message: "กรุณาลองใหม่ภายหลัง" },
 });
 
