@@ -1,4 +1,6 @@
 const router = require("express").Router();
+const fs = require("fs");
+const PDFDocument = require("pdfkit");
 const pool = require("../db");
 const { verifyToken } = require("../middleware/auth");
 
@@ -84,6 +86,79 @@ router.get("/order/:orderId", verifyToken, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "เกิดข้อผิดพลาดของเซิร์ฟเวอร์" });
+  }
+});
+
+// GET /api/payments/order/:orderId/receipt
+// สร้างใบเสร็จจากข้อมูลในฐานข้อมูล และอนุญาตเฉพาะเจ้าของออร์เดอร์หรือ admin
+router.get("/order/:orderId/receipt", verifyToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT p.payment_id, p.order_id, p.amount, p.payment_method, p.transaction_ref, p.payment_date,
+              o.user_id, o.order_date, u.username, u.full_name, u.email
+       FROM payments p
+       JOIN orders o ON o.order_id = p.order_id
+       JOIN users u ON u.user_id = o.user_id
+       WHERE p.order_id = ? AND p.payment_status = 'success'
+       ORDER BY p.payment_id DESC LIMIT 1`,
+      [req.params.orderId]
+    );
+    const payment = rows[0];
+    if (!payment) return res.status(404).json({ message: "ไม่พบข้อมูลการชำระเงิน" });
+    if (payment.user_id !== req.user.user_id && req.user.role !== "admin")
+      return res.status(403).json({ message: "ไม่มีสิทธิ์ดูใบเสร็จนี้" });
+
+    const [items] = await pool.query(
+      `SELECT d.product_id, p.name, d.quantity, d.price_at_order,
+              (d.quantity * d.price_at_order) AS subtotal
+       FROM order_details d
+       JOIN products p ON p.product_id = d.product_id
+       WHERE d.order_id = ?
+       ORDER BY d.order_detail_id`,
+      [req.params.orderId]
+    );
+
+    const doc = new PDFDocument({ size: "A4", margin: 50 });
+    const fontPath = process.env.PDF_FONT_PATH;
+    if (fontPath && fs.existsSync(fontPath)) doc.font(fontPath);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename=receipt-order-${payment.order_id}.pdf`);
+    doc.pipe(res);
+
+    const money = (value) => Number(value || 0).toFixed(2);
+    const dateText = new Date(payment.payment_date).toLocaleString("en-GB");
+    doc.fontSize(20).text("PROBIOTIC SHOP", { align: "center" });
+    doc.moveDown(0.4).fontSize(16).text("PAYMENT RECEIPT", { align: "center" });
+    doc.moveDown();
+    doc.fontSize(10)
+      .text(`Receipt no.: ${payment.payment_id}`)
+      .text(`Order no.: ${payment.order_id}`)
+      .text(`Customer: ${payment.full_name || payment.username}`)
+      .text(`Email: ${payment.email}`)
+      .text(`Payment date: ${dateText}`)
+      .text(`Payment method: ${payment.payment_method}`)
+      .text(`Transaction ref.: ${payment.transaction_ref}`);
+    doc.moveDown();
+    doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+    doc.moveDown(0.5);
+    doc.fontSize(10).text("Product", 50, doc.y, { continued: true, width: 250 })
+      .text("Qty", 300, doc.y, { continued: true, width: 60, align: "right" })
+      .text("Subtotal (THB)", 380, doc.y, { width: 165, align: "right" });
+    doc.moveDown(0.5);
+    for (const item of items) {
+      doc.text(`${item.name} (#${item.product_id})`, 50, doc.y, { continued: true, width: 250 })
+        .text(String(item.quantity), 300, doc.y, { continued: true, width: 60, align: "right" })
+        .text(money(item.subtotal), 380, doc.y, { width: 165, align: "right" });
+      doc.moveDown(0.35);
+    }
+    doc.moveDown(0.5);
+    doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+    doc.moveDown(0.5).fontSize(14).text(`TOTAL: THB ${money(payment.amount)}`, { align: "right" });
+    doc.moveDown(2).fontSize(10).text("Thank you for your purchase.", { align: "center" });
+    doc.end();
+  } catch (err) {
+    console.error(err);
+    if (!res.headersSent) res.status(500).json({ message: "ไม่สามารถสร้างใบเสร็จ PDF ได้" });
   }
 });
 

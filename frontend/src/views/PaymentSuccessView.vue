@@ -2,7 +2,6 @@
 import AppNavbar from '../components/AppNavbar.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
-import Swal from 'sweetalert2'
 import http from '../api/http'
 import { useAuthStore } from '../stores/auth'
 
@@ -13,6 +12,7 @@ const auth = useAuthStore()
 const payment = ref(null)
 const loading = ref(true)
 const error = ref('')
+const receiptLoading = ref(false)
 
 const methodText = { bank_transfer: 'โอนเงินผ่านธนาคาร', promptpay: 'พร้อมเพย์ (PromptPay)' }
 const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2 })
@@ -35,14 +35,18 @@ onMounted(async () => {
   }
 })
 
-// TODO: Feature ถัดไปจะเปลี่ยนเป็นเปิดใบเสร็จ PDF
-function openReceipt() {
-  Swal.fire({
-    icon: 'info',
-    title: 'ใบเสร็จ',
-    text: 'ใบเสร็จรูปแบบ PDF จะเปิดใช้งานในขั้นถัดไป',
-    confirmButtonColor: '#14532D',
-  })
+async function openReceipt() {
+  receiptLoading.value = true
+  try {
+    const { data } = await http.get(`/payments/order/${route.params.id}/receipt`, { responseType: 'blob' })
+    const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }))
+    window.open(url, '_blank', 'noopener,noreferrer')
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  } catch (e) {
+    error.value = e.response?.data?.message || 'ไม่สามารถเปิดใบเสร็จ PDF ได้'
+  } finally {
+    receiptLoading.value = false
+  }
 }
 </script>
 
@@ -68,8 +72,8 @@ function openReceipt() {
         </dl>
 
         <div class="mt-8 flex flex-wrap justify-center gap-3">
-          <button @click="openReceipt" class="bg-[#14532D] text-white rounded-full px-6 py-2.5 hover:bg-[#0f4023]">
-            ดูใบเสร็จ
+          <button @click="openReceipt" :disabled="receiptLoading" class="bg-[#14532D] text-white rounded-full px-6 py-2.5 hover:bg-[#0f4023] disabled:opacity-60">
+            {{ receiptLoading ? 'กำลังสร้าง PDF...' : 'ดูใบเสร็จ PDF' }}
           </button>
           <RouterLink to="/products" class="border border-[#14532D] text-[#14532D] rounded-full px-6 py-2.5 hover:bg-[#F6F9F4]">
             เลือกซื้อสินค้าต่อ
