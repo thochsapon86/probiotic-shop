@@ -22,7 +22,10 @@ const cartBadge = computed(() => (cart.count > 99 ? '99+' : cart.count))
 const links = computed(() => {
   const l = [{ to: '/', label: 'หน้าแรก' }]
   if (auth.isLoggedIn) l.push({ to: '/products', label: 'สินค้า' })
-  if (auth.isAdmin) l.push({ to: '/admin/products', label: 'จัดการสินค้า' })
+  if (auth.isAdmin) {
+    l.push({ to: '/admin/dashboard', label: 'Dashboard' })
+    l.push({ to: '/admin/products', label: 'จัดการสินค้า' })
+  }
   l.push({ to: '/contact', label: 'ติดต่อเรา' })
   return l
 })
