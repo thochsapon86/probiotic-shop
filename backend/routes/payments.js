@@ -122,8 +122,14 @@ router.get("/order/:orderId/receipt", verifyToken, async (req, res) => {
     );
 
     const doc = new PDFDocument({ size: "A4", margin: 50 });
-    // ใช้ฟอนต์ที่รองรับภาษาไทยบน Windows หากไม่ได้กำหนด path เอง
-    const fontPath = process.env.PDF_FONT_PATH || "C:\\Windows\\Fonts\\arial.ttf";
+    // เลือกฟอนต์ที่รองรับภาษาไทย โดยให้กำหนด path เองผ่าน env ได้ก่อน
+    const fontCandidates = [
+      process.env.PDF_FONT_PATH,
+      "C:\\Windows\\Fonts\\LeelawUI.ttf",
+      "C:\\Windows\\Fonts\\tahoma.ttf",
+      "C:\\Windows\\Fonts\\arial.ttf",
+    ].filter(Boolean);
+    const fontPath = fontCandidates.find((candidate) => fs.existsSync(candidate));
     if (fontPath && fs.existsSync(fontPath)) doc.font(fontPath);
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename=receipt-order-${payment.order_id}.pdf`);
@@ -145,19 +151,25 @@ router.get("/order/:orderId/receipt", verifyToken, async (req, res) => {
     doc.moveDown();
     doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
     doc.moveDown(0.5);
-    doc.fontSize(10).text("Product", 50, doc.y, { continued: true, width: 250 })
-      .text("Qty", 300, doc.y, { continued: true, width: 60, align: "right" })
-      .text("Subtotal (THB)", 380, doc.y, { width: 165, align: "right" });
-    doc.moveDown(0.5);
+    const table = { productX: 50, productWidth: 260, qtyX: 320, qtyWidth: 55, amountX: 390, amountWidth: 155 };
+    const drawTableRow = (name, quantity, subtotal) => {
+      const y = doc.y;
+      const nameHeight = doc.heightOfString(name, { width: table.productWidth });
+      doc.text(name, table.productX, y, { width: table.productWidth });
+      doc.text(quantity, table.qtyX, y, { width: table.qtyWidth, align: "right" });
+      doc.text(subtotal, table.amountX, y, { width: table.amountWidth, align: "right" });
+      doc.y = y + Math.max(18, nameHeight + 4);
+    };
+    doc.fontSize(10);
+    drawTableRow("Product", "Qty", "Subtotal (THB)");
+    doc.moveDown(0.35);
     for (const item of items) {
-      doc.text(`${item.name} (#${item.product_id})`, 50, doc.y, { continued: true, width: 250 })
-        .text(String(item.quantity), 300, doc.y, { continued: true, width: 60, align: "right" })
-        .text(money(item.subtotal), 380, doc.y, { width: 165, align: "right" });
-      doc.moveDown(0.35);
+      drawTableRow(`${item.name} (#${item.product_id})`, String(item.quantity), money(item.subtotal));
+      doc.moveDown(0.2);
     }
     doc.moveDown(0.5);
     doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
-    doc.moveDown(0.5).fontSize(14).text(`TOTAL: THB ${money(payment.amount)}`, { align: "right" });
+    doc.moveDown(0.5).fontSize(14).text(`TOTAL: THB ${money(payment.amount)}`, 50, doc.y, { width: 495, align: "right" });
     doc.moveDown(2).fontSize(10).text("Thank you for your purchase.", { align: "center" });
     doc.end();
   } catch (err) {
