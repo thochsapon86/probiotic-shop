@@ -1,7 +1,7 @@
 <script setup>
 import AppNavbar from '../components/AppNavbar.vue'
 import { ref, onMounted } from 'vue'
-import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import http from '../api/http'
 import { useAuthStore } from '../stores/auth'
 
@@ -14,8 +14,6 @@ const loading = ref(true)
 const error = ref('')
 const formError = ref('')
 const submitting = ref(false)
-const paymentSubmitted = ref(false)
-const cancelOnLeave = ref(false)
 
 const method = ref('bank_transfer')
 const reference = ref('')
@@ -41,7 +39,6 @@ onMounted(async () => {
     if (data.status === 'paid') return router.replace(`/orders/${data.order_id}/success`)
     if (data.status !== 'pending') return router.replace(`/orders/${data.order_id}`)
     order.value = data
-    cancelOnLeave.value = true
   } catch (e) {
     if (e.response?.status === 401) {
       auth.logout()
@@ -50,19 +47,6 @@ onMounted(async () => {
     error.value = e.response?.data?.message || 'โหลดข้อมูลออร์เดอร์ไม่สำเร็จ'
   } finally {
     loading.value = false
-  }
-})
-
-// หากผู้ซื้อออกจากหน้าชำระเงินก่อนจ่าย ให้ยกเลิกออร์เดอร์และคืน stock ทันที
-onBeforeRouteLeave(async () => {
-  if (!cancelOnLeave.value || paymentSubmitted.value || !order.value) return true
-  try {
-    await http.post(`/orders/${order.value.order_id}/cancel`)
-    cancelOnLeave.value = false
-    return true
-  } catch (e) {
-    formError.value = e.response?.data?.message || 'ไม่สามารถยกเลิกออร์เดอร์ก่อนออกจากหน้าได้'
-    return false
   }
 })
 
@@ -84,8 +68,6 @@ async function submit() {
       payment_method: method.value,
       transaction_ref: ref_,
     })
-    paymentSubmitted.value = true
-    cancelOnLeave.value = false
     router.push(`/orders/${order.value.order_id}/success`)
   } catch (e) {
     formError.value = e.response?.data?.message || 'บันทึกการชำระเงินไม่สำเร็จ'
@@ -160,9 +142,9 @@ async function submit() {
           </label>
 
           <div class="flex flex-col-reverse sm:flex-row gap-3">
-            <button type="button" @click="router.push(`/orders/${order.order_id}`)" :disabled="submitting"
-              class="sm:w-1/3 border border-red-300 text-red-600 rounded-full py-3 hover:bg-red-50 disabled:opacity-60">
-              ออกและยกเลิกออร์เดอร์
+            <button type="button" @click="router.push('/')" :disabled="submitting"
+              class="sm:w-1/3 border border-[#14532D] text-[#14532D] rounded-full py-3 hover:bg-[#F6F9F4] disabled:opacity-60">
+              กลับหน้าหลัก
             </button>
             <button :disabled="submitting"
               class="sm:flex-1 bg-[#14532D] text-white rounded-full py-3 font-medium hover:bg-[#0f4023] disabled:opacity-60">

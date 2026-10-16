@@ -106,6 +106,33 @@ router.get("/", verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/orders/mine?status=pending (รายการออร์เดอร์ของลูกค้าที่ login อยู่)
+router.get("/mine", verifyToken, async (req, res) => {
+  const status = String(req.query.status || "").trim();
+  const allowedStatuses = ["pending", "paid", "cancelled"];
+  if (status && !allowedStatuses.includes(status)) {
+    return res.status(400).json({ message: "สถานะออร์เดอร์ไม่ถูกต้อง" });
+  }
+
+  try {
+    const params = [req.user.user_id];
+    const statusFilter = status ? " AND o.status = ?" : "";
+    if (status) params.push(status);
+    const [rows] = await pool.query(
+      `SELECT o.order_id, o.order_date, o.total_amount, o.status,
+              (SELECT COUNT(*) FROM order_details d WHERE d.order_id = o.order_id) AS item_lines
+       FROM orders o
+       WHERE o.user_id = ?${statusFilter}
+       ORDER BY o.order_date DESC, o.order_id DESC`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "ไม่สามารถโหลดออร์เดอร์ของฉันได้" });
+  }
+});
+
 // GET /api/orders/:id  (เจ้าของออร์เดอร์หรือ admin เท่านั้น)
 router.get("/:id", verifyToken, async (req, res) => {
   try {
