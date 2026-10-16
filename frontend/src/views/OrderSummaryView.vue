@@ -126,7 +126,7 @@ async function cancelOrder() {
         </div>
 
         <div class="mt-6 flex flex-wrap justify-end gap-3">
-          <template v-if="order.status === 'pending'">
+          <template v-if="order.status === 'pending' && !auth.isAdmin">
             <button @click="cancelOrder"
               class="border border-red-300 text-red-600 rounded-full px-6 py-3 hover:bg-red-50">
               ยกเลิกออร์เดอร์

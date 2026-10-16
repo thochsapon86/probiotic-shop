@@ -10,6 +10,9 @@ const REF_RE = /^[A-Za-z0-9-]{6,30}$/;
 // POST /api/payments   body: { order_id, payment_method, transaction_ref }
 // จำนวนเงินอ่านจากตาราง orders เอง ไม่รับจากหน้าเว็บ
 router.post("/", verifyToken, async (req, res) => {
+  if (req.user.role === "admin")
+    return res.status(403).json({ message: "Admin ไม่สามารถชำระเงินแทนลูกค้าได้" });
+
   const orderId = Number(req.body.order_id);
   const method = req.body.payment_method;
   const ref = String(req.body.transaction_ref || "").trim();
