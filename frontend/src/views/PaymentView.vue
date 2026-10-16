@@ -36,7 +36,10 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
 onMounted(async () => {
   try {
     const { data } = await http.get(`/orders/${route.params.id}`)
-    if (data.status === 'paid') return router.replace(`/orders/${data.order_id}/success`)
+    if (data.status === 'paid') {
+      auth.clearPendingOrder()
+      return router.replace(`/orders/${data.order_id}/success`)
+    }
     if (data.status !== 'pending') return router.replace(`/orders/${data.order_id}`)
     order.value = data
   } catch (e) {
@@ -68,6 +71,7 @@ async function submit() {
       payment_method: method.value,
       transaction_ref: ref_,
     })
+    auth.clearPendingOrder()
     router.push(`/orders/${order.value.order_id}/success`)
   } catch (e) {
     formError.value = e.response?.data?.message || 'บันทึกการชำระเงินไม่สำเร็จ'

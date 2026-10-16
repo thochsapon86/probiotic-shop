@@ -23,6 +23,7 @@ async function checkout() {
     const items = cart.items.map((i) => ({ product_id: i.product_id, quantity: i.quantity }))
     const { data } = await http.post('/orders', { items })
     cart.clear()
+    auth.setPendingOrder(data.order_id)
     router.push(`/orders/${data.order_id}`)
   } catch (e) {
     if (e.response?.status === 401) {

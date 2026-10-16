@@ -22,6 +22,7 @@ onMounted(async () => {
   try {
     const { data } = await http.get(`/payments/order/${route.params.id}`)
     payment.value = data
+    auth.clearPendingOrder()
   } catch (e) {
     if (e.response?.status === 401) {
       auth.logout()
