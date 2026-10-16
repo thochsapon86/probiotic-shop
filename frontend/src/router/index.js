@@ -12,7 +12,8 @@ const router = createRouter({
     { path: '/admin/products', name: 'admin-products', component: () => import('../views/AdminProductsView.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/dashboard', name: 'admin-dashboard', component: () => import('../views/DashboardView.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/orders', name: 'admin-orders', component: () => import('../views/AdminOrdersView.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
-    { path: '/my-orders', name: 'my-orders', component: () => import('../views/MyOrdersView.vue'), meta: { requiresAuth: true } },
+    // รองรับลิงก์เดิม โดยพากลับมาหน้า Cart ที่รวมรายการออเดอร์ไว้แล้ว
+    { path: '/my-orders', name: 'my-orders', redirect: { name: 'cart' }, meta: { requiresAuth: true } },
     { path: '/contact', name: 'contact', component: () => import('../views/ContactView.vue') },
     { path: '/products', name: 'products', component: () => import('../views/ProductView.vue'), meta: { requiresAuth: true }, },
     { path: '/cart', name: 'cart', component: () => import('../views/CartView.vue'), meta: { requiresAuth: true } },
