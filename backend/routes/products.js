@@ -67,6 +67,7 @@ function verifyImage(req, res, next) {
 const rules = [
   body("name").trim().notEmpty().withMessage("กรุณากรอกชื่อสินค้า"),
   body("description").optional({ checkFalsy: true }).trim(),
+  body("category").optional({ checkFalsy: true }).trim().isLength({ max: 100 }).withMessage("หมวดหมู่สินค้ายาวเกิน 100 ตัวอักษร"),
   body("price").isFloat({ min: 0 }).withMessage("ราคาต้องเป็นตัวเลขไม่ต่ำกว่า 0"),
   body("stock").isInt({ min: 0 }).withMessage("จำนวนสต็อกต้องเป็นจำนวนเต็มไม่ต่ำกว่า 0"),
 ];
@@ -154,11 +155,11 @@ router.post("/", verifyToken, requireAdmin, handleUpload, verifyImage, rules, as
     return res.status(400).json({ message: errors.array()[0].msg });
   }
 
-  const { name, description, price, stock } = req.body;
+  const { name, description, category, price, stock } = req.body;
   try {
     const [r] = await pool.query(
-      "INSERT INTO products (name, description, price, stock, image_url) VALUES (?, ?, ?, ?, ?)",
-      [name, description || null, price, stock, image]
+      "INSERT INTO products (name, description, category, price, stock, image_url) VALUES (?, ?, ?, ?, ?, ?)",
+      [name, description || null, category || null, price, stock, image]
     );
     res.status(201).json({ message: "เพิ่มสินค้าสำเร็จ", product_id: r.insertId });
   } catch (err) {
@@ -178,7 +179,7 @@ router.put("/:id", verifyToken, requireAdmin, handleUpload, verifyImage, rules, 
     return res.status(400).json({ message: errors.array()[0].msg });
   }
 
-  const { name, description, price, stock } = req.body;
+  const { name, description, category, price, stock } = req.body;
   try {
     const [old] = await pool.query("SELECT image_url FROM products WHERE product_id = ?", [req.params.id]);
     if (!old[0]) {
@@ -191,8 +192,8 @@ router.put("/:id", verifyToken, requireAdmin, handleUpload, verifyImage, rules, 
     else if (req.body.remove_image === "1") image = null;
 
     await pool.query(
-      "UPDATE products SET name=?, description=?, price=?, stock=?, image_url=? WHERE product_id=?",
-      [name, description || null, price, stock, image, req.params.id]
+      "UPDATE products SET name=?, description=?, category=?, price=?, stock=?, image_url=? WHERE product_id=?",
+      [name, description || null, category || null, price, stock, image, req.params.id]
     );
     if (image !== old[0].image_url) removeLocalImage(old[0].image_url);
     res.json({ message: "แก้ไขสินค้าสำเร็จ" });

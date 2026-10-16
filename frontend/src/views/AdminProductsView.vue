@@ -14,7 +14,7 @@ const showModal = ref(false)
 const editingId = ref(null)
 const saving = ref(false)
 const formError = ref('')
-const emptyForm = () => ({ name: '', description: '', price: '', stock: '' })
+const emptyForm = () => ({ name: '', description: '', category: '', price: '', stock: '' })
 const form = ref(emptyForm())
 
 // ---- รูปสินค้า ----
@@ -58,6 +58,7 @@ function buildFormData(f) {
   const fd = new FormData()
   fd.append('name', f.name.trim())
   fd.append('description', f.description || '')
+  fd.append('category', f.category?.trim() || '')
   fd.append('price', f.price)
   fd.append('stock', f.stock)
   if (imageFile.value) fd.append('image', imageFile.value)
@@ -99,6 +100,7 @@ function openEdit(p) {
   form.value = {
     name: p.name,
     description: p.description || '',
+    category: p.category || '',
     price: p.price,
     stock: p.stock,
   }
@@ -174,15 +176,16 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
             <tr>
               <th class="px-4 py-3">รหัส</th>
               <th class="px-4 py-3">ชื่อสินค้า</th>
+              <th class="px-4 py-3">หมวดหมู่</th>
               <th class="px-4 py-3 text-right">ราคา (฿)</th>
               <th class="px-4 py-3 text-right">สต็อก</th>
               <th class="px-4 py-3 text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-if="loading"><td colspan="5" class="px-4 py-8 text-center text-gray-500">กำลังโหลด...</td></tr>
+            <tr v-if="loading"><td colspan="6" class="px-4 py-8 text-center text-gray-500">กำลังโหลด...</td></tr>
             <tr v-else-if="products.length === 0">
-              <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+              <td colspan="6" class="px-4 py-8 text-center text-gray-500">
                 {{ search ? 'ไม่พบสินค้าที่ตรงกับคำค้นหา' : 'ยังไม่มีสินค้า กดปุ่ม "เพิ่มสินค้า" เพื่อเริ่มต้น' }}
               </td>
             </tr>
@@ -199,6 +202,7 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
                   </div>
                 </div>
               </td>
+              <td class="px-4 py-3">{{ p.category || '-' }}</td>
               <td class="px-4 py-3 text-right">{{ baht(p.price) }}</td>
               <td class="px-4 py-3 text-right" :class="p.stock === 0 ? 'text-red-600 font-medium' : ''">{{ p.stock }}</td>
               <td class="px-4 py-3 text-right whitespace-nowrap">
@@ -225,6 +229,11 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
         <div>
           <label class="block text-sm mb-1">รายละเอียด</label>
           <textarea v-model="form.description" rows="3" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">หมวดหมู่สินค้า</label>
+          <input v-model="form.category" maxlength="100" placeholder="เช่น แคปซูล, ผงชงดื่ม"
+            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
