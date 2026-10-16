@@ -23,7 +23,6 @@ const links = computed(() => {
   const l = [{ to: '/', label: 'หน้าแรก' }]
   if (auth.isLoggedIn) {
     l.push({ to: '/products', label: 'สินค้า' })
-    if (!auth.isAdmin) l.push({ to: '/my-orders', label: 'ออร์เดอร์ของฉัน' })
     if (!auth.isAdmin && auth.hasPendingOrder) {
       l.push({ to: `/orders/${auth.pendingOrderId}/pay`, label: 'ชำระเงินต่อ' })
     }
