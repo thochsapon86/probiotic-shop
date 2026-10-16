@@ -13,6 +13,7 @@ const loading = ref(false)
 const showModal = ref(false)
 const editingId = ref(null)
 const saving = ref(false)
+const importing = ref(false)
 const formError = ref('')
 const emptyForm = () => ({ name: '', description: '', category: '', price: '', stock: '' })
 const form = ref(emptyForm())
@@ -141,6 +142,29 @@ async function save() {
   }
 }
 
+// ส่งไฟล์ JSON ให้ backend ตรวจสอบและเพิ่มสินค้าทั้งชุดด้วย transaction
+async function importJson(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+  if (!file.name.toLowerCase().endsWith('.json')) {
+    return Swal.fire({ icon: 'error', title: 'ไฟล์ไม่ถูกต้อง', text: 'กรุณาเลือกไฟล์นามสกุล .json' })
+  }
+
+  importing.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const { data } = await http.post('/products/import-json', fd)
+    await loadProducts()
+    Swal.fire({ icon: 'success', title: 'นำเข้าสินค้าสำเร็จ', text: data.message, timer: 1800, showConfirmButton: false })
+  } catch (e) {
+    Swal.fire({ icon: 'error', title: 'นำเข้าสินค้าไม่สำเร็จ', text: e.response?.data?.message || 'กรุณาตรวจสอบไฟล์ JSON' })
+  } finally {
+    importing.value = false
+  }
+}
+
 async function remove(p) {
   const r = await Swal.fire({
     icon: 'warning',
@@ -174,9 +198,16 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
       <div class="flex flex-wrap items-center gap-3 justify-between">
         <input v-model="search" type="search" placeholder="ค้นหาชื่อ รายละเอียด หรือรหัสสินค้า"
           class="w-full sm:w-80 border rounded-full px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-400" />
-        <button @click="openAdd" class="bg-[#14532D] text-white rounded-full px-5 py-2 hover:bg-[#0f4023]">
-          เพิ่มสินค้า
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <label class="cursor-pointer border border-[#14532D] text-[#14532D] rounded-full px-5 py-2 hover:bg-[#E3F0E6]"
+            :class="importing ? 'opacity-60 pointer-events-none' : ''">
+            {{ importing ? 'กำลังนำเข้า...' : 'นำเข้า JSON' }}
+            <input type="file" accept="application/json,.json" class="hidden" @change="importJson" :disabled="importing" />
+          </label>
+          <button @click="openAdd" class="bg-[#14532D] text-white rounded-full px-5 py-2 hover:bg-[#0f4023]">
+            เพิ่มสินค้า
+          </button>
+        </div>
       </div>
 
       <div class="mt-6 bg-white rounded-2xl overflow-x-auto">

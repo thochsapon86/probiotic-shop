@@ -24,6 +24,22 @@ const upload = multer({
     EXT[file.mimetype] ? cb(null, true) : cb(new Error("INVALID_TYPE")),
 });
 
+// Import JSON ใช้ memory storage เพราะไม่ควรเก็บไฟล์ข้อมูลชั่วคราวไว้ใน uploads
+const jsonUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 1024 * 1024, files: 1 },
+});
+
+function handleJsonUpload(req, res, next) {
+  jsonUpload.single("file")(req, res, (err) => {
+    if (!err) return next();
+    const message = err.code === "LIMIT_FILE_SIZE"
+      ? "ไฟล์ JSON ต้องมีขนาดไม่เกิน 1 MB"
+      : "อัปโหลดไฟล์ JSON ไม่สำเร็จ";
+    res.status(400).json({ message });
+  });
+}
+
 function handleUpload(req, res, next) {
   upload.single("image")(req, res, (err) => {
     if (!err) return next();
@@ -131,6 +147,62 @@ router.get("/categories", verifyToken, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "เกิดข้อผิดพลาดของเซิร์ฟเวอร์" });
+  }
+});
+
+// POST /api/products/import-json (admin) รับไฟล์ JSON ที่มี products เป็น array
+router.post("/import-json", verifyToken, requireAdmin, handleJsonUpload, async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "กรุณาเลือกไฟล์ JSON" });
+
+  let payload;
+  try {
+    payload = JSON.parse(req.file.buffer.toString("utf8"));
+  } catch {
+    return res.status(400).json({ message: "รูปแบบไฟล์ JSON ไม่ถูกต้อง" });
+  }
+
+  const products = Array.isArray(payload) ? payload : payload?.products;
+  if (!Array.isArray(products) || products.length === 0) {
+    return res.status(400).json({ message: "ไฟล์ต้องมีรายการสินค้าเป็น array หรืออยู่ในฟิลด์ products" });
+  }
+  if (products.length > 500) {
+    return res.status(400).json({ message: "นำเข้าได้ไม่เกิน 500 รายการต่อครั้ง" });
+  }
+
+  const normalized = [];
+  for (let index = 0; index < products.length; index += 1) {
+    const item = products[index];
+    const name = typeof item?.name === "string" ? item.name.trim() : "";
+    const description = typeof item?.description === "string" ? item.description.trim() : null;
+    const category = typeof item?.category === "string" ? item.category.trim() : null;
+    const price = Number(item?.price);
+    const stock = Number(item?.stock);
+    if (!name || name.length > 255 || !Number.isFinite(price) || price < 0 ||
+        !Number.isInteger(stock) || stock < 0 || (category && category.length > 100)) {
+      return res.status(400).json({
+        message: `ข้อมูลสินค้าแถวที่ ${index + 1} ไม่ถูกต้อง (ต้องมี name, price และ stock)`,
+      });
+    }
+    normalized.push({ name, description: description || null, category: category || null, price, stock });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    for (const item of normalized) {
+      await conn.query(
+        "INSERT INTO products (name, description, category, price, stock, image_url) VALUES (?, ?, ?, ?, ?, NULL)",
+        [item.name, item.description, item.category, item.price, item.stock]
+      );
+    }
+    await conn.commit();
+    res.status(201).json({ message: `นำเข้าสินค้าสำเร็จ ${normalized.length} รายการ`, imported: normalized.length });
+  } catch (err) {
+    await conn.rollback();
+    console.error(err);
+    res.status(500).json({ message: "ไม่สามารถนำเข้าสินค้าจากไฟล์ JSON ได้" });
+  } finally {
+    conn.release();
   }
 });
 
