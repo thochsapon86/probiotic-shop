@@ -36,7 +36,10 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
 onMounted(async () => {
   try {
     const { data } = await http.get(`/orders/${route.params.id}`)
-    if (data.status === 'paid') return router.replace(`/orders/${data.order_id}/success`)
+    if (data.status === 'paid') {
+      auth.clearPendingOrder()
+      return router.replace(`/orders/${data.order_id}/success`)
+    }
     if (data.status !== 'pending') return router.replace(`/orders/${data.order_id}`)
     order.value = data
   } catch (e) {
@@ -68,6 +71,7 @@ async function submit() {
       payment_method: method.value,
       transaction_ref: ref_,
     })
+    auth.clearPendingOrder()
     router.push(`/orders/${order.value.order_id}/success`)
   } catch (e) {
     formError.value = e.response?.data?.message || 'บันทึกการชำระเงินไม่สำเร็จ'
@@ -141,10 +145,16 @@ async function submit() {
             <span>ข้าพเจ้าได้โอนเงินตามยอดที่ระบุข้างต้นเรียบร้อยแล้ว</span>
           </label>
 
-          <button :disabled="submitting"
-            class="w-full bg-[#14532D] text-white rounded-full py-3 font-medium hover:bg-[#0f4023] disabled:opacity-60">
-            {{ submitting ? 'กำลังบันทึก...' : `ยืนยันการชำระเงิน ฿${baht(order.total_amount)}` }}
-          </button>
+          <div class="flex flex-col-reverse sm:flex-row gap-3">
+            <button type="button" @click="router.push('/')" :disabled="submitting"
+              class="sm:w-1/3 border border-[#14532D] text-[#14532D] rounded-full py-3 hover:bg-[#F6F9F4] disabled:opacity-60">
+              กลับหน้าหลัก
+            </button>
+            <button :disabled="submitting"
+              class="sm:flex-1 bg-[#14532D] text-white rounded-full py-3 font-medium hover:bg-[#0f4023] disabled:opacity-60">
+              {{ submitting ? 'กำลังบันทึก...' : `ยืนยันการชำระเงิน ฿${baht(order.total_amount)}` }}
+            </button>
+          </div>
         </form>
       </template>
     </main>

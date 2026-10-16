@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const pool = require("../db");
-const { verifyToken } = require("../middleware/auth");
+const { verifyToken, requireAdmin } = require("../middleware/auth");
 
 class OrderError extends Error {}
 
@@ -63,6 +63,73 @@ router.post("/", verifyToken, async (req, res) => {
     res.status(500).json({ message: "เกิดข้อผิดพลาดของเซิร์ฟเวอร์" });
   } finally {
     conn.release();
+  }
+});
+
+// GET /api/orders?status=paid&search=username-or-order-id (admin เท่านั้น)
+router.get("/", verifyToken, requireAdmin, async (req, res) => {
+  const status = String(req.query.status || "").trim();
+  const search = String(req.query.search || "").trim();
+  const allowedStatuses = ["pending", "paid", "cancelled"];
+  if (status && !allowedStatuses.includes(status)) {
+    return res.status(400).json({ message: "สถานะออร์เดอร์ไม่ถูกต้อง" });
+  }
+
+  const where = [];
+  const params = [];
+  if (status) {
+    where.push("o.status = ?");
+    params.push(status);
+  }
+  if (search) {
+    where.push("(o.order_id = ? OR u.username LIKE ? OR u.full_name LIKE ?)");
+    params.push(Number(search) || 0, `%${search}%`, `%${search}%`);
+  }
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT o.order_id, o.order_date, o.total_amount, o.status,
+              u.username, u.full_name, u.email,
+              p.payment_method, p.payment_date
+       FROM orders o
+       JOIN users u ON u.user_id = o.user_id
+       LEFT JOIN payments p ON p.order_id = o.order_id AND p.payment_status = 'success'
+       ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+       ORDER BY o.order_date DESC, o.order_id DESC
+       LIMIT 100`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "ไม่สามารถโหลดรายการออร์เดอร์ได้" });
+  }
+});
+
+// GET /api/orders/mine?status=pending (รายการออร์เดอร์ของลูกค้าที่ login อยู่)
+router.get("/mine", verifyToken, async (req, res) => {
+  const status = String(req.query.status || "").trim();
+  const allowedStatuses = ["pending", "paid", "cancelled"];
+  if (status && !allowedStatuses.includes(status)) {
+    return res.status(400).json({ message: "สถานะออร์เดอร์ไม่ถูกต้อง" });
+  }
+
+  try {
+    const params = [req.user.user_id];
+    const statusFilter = status ? " AND o.status = ?" : "";
+    if (status) params.push(status);
+    const [rows] = await pool.query(
+      `SELECT o.order_id, o.order_date, o.total_amount, o.status,
+              (SELECT COUNT(*) FROM order_details d WHERE d.order_id = o.order_id) AS item_lines
+       FROM orders o
+       WHERE o.user_id = ?${statusFilter}
+       ORDER BY o.order_date DESC, o.order_id DESC`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "ไม่สามารถโหลดออร์เดอร์ของฉันได้" });
   }
 });
 
