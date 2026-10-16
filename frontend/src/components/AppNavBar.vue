@@ -24,6 +24,7 @@ const links = computed(() => {
   if (auth.isLoggedIn) l.push({ to: '/products', label: 'สินค้า' })
   if (auth.isAdmin) {
     l.push({ to: '/admin/dashboard', label: 'Dashboard' })
+    l.push({ to: '/admin/orders', label: 'ออร์เดอร์' })
     l.push({ to: '/admin/products', label: 'จัดการสินค้า' })
   }
   l.push({ to: '/contact', label: 'ติดต่อเรา' })
