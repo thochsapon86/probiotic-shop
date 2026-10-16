@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Probiotic Original 30 Capsules",
+    "description": "โปรไบโอติกแบบแคปซูลสำหรับดูแลสุขภาพลำไส้",
+    "category": "โปรไบโอติกแบบแคปซูล",
+    "price": 390,
+    "stock": 25
+  },
+  {
+    "name": "Probiotic Daily Powder",
+    "description": "โปรไบโอติกแบบผงชงดื่ม",
+    "category": "โปรไบโอติกแบบผง",
+    "price": 290,
+    "stock": 40
+  }
+]

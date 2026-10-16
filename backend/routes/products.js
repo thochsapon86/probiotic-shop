@@ -24,6 +24,22 @@ const upload = multer({
     EXT[file.mimetype] ? cb(null, true) : cb(new Error("INVALID_TYPE")),
 });
 
+// Import JSON ใช้ memory storage เพราะไม่ควรเก็บไฟล์ข้อมูลชั่วคราวไว้ใน uploads
+const jsonUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 1024 * 1024, files: 1 },
+});
+
+function handleJsonUpload(req, res, next) {
+  jsonUpload.single("file")(req, res, (err) => {
+    if (!err) return next();
+    const message = err.code === "LIMIT_FILE_SIZE"
+      ? "ไฟล์ JSON ต้องมีขนาดไม่เกิน 1 MB"
+      : "อัปโหลดไฟล์ JSON ไม่สำเร็จ";
+    res.status(400).json({ message });
+  });
+}
+
 function handleUpload(req, res, next) {
   upload.single("image")(req, res, (err) => {
     if (!err) return next();
@@ -67,6 +83,7 @@ function verifyImage(req, res, next) {
 const rules = [
   body("name").trim().notEmpty().withMessage("กรุณากรอกชื่อสินค้า"),
   body("description").optional({ checkFalsy: true }).trim(),
+  body("category").optional({ checkFalsy: true }).trim().isLength({ max: 100 }).withMessage("หมวดหมู่สินค้ายาวเกิน 100 ตัวอักษร"),
   body("price").isFloat({ min: 0 }).withMessage("ราคาต้องเป็นตัวเลขไม่ต่ำกว่า 0"),
   body("stock").isInt({ min: 0 }).withMessage("จำนวนสต็อกต้องเป็นจำนวนเต็มไม่ต่ำกว่า 0"),
 ];
@@ -133,6 +150,62 @@ router.get("/categories", verifyToken, async (req, res) => {
   }
 });
 
+// POST /api/products/import-json (admin) รับไฟล์ JSON ที่มี products เป็น array
+router.post("/import-json", verifyToken, requireAdmin, handleJsonUpload, async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "กรุณาเลือกไฟล์ JSON" });
+
+  let payload;
+  try {
+    payload = JSON.parse(req.file.buffer.toString("utf8"));
+  } catch {
+    return res.status(400).json({ message: "รูปแบบไฟล์ JSON ไม่ถูกต้อง" });
+  }
+
+  const products = Array.isArray(payload) ? payload : payload?.products;
+  if (!Array.isArray(products) || products.length === 0) {
+    return res.status(400).json({ message: "ไฟล์ต้องมีรายการสินค้าเป็น array หรืออยู่ในฟิลด์ products" });
+  }
+  if (products.length > 500) {
+    return res.status(400).json({ message: "นำเข้าได้ไม่เกิน 500 รายการต่อครั้ง" });
+  }
+
+  const normalized = [];
+  for (let index = 0; index < products.length; index += 1) {
+    const item = products[index];
+    const name = typeof item?.name === "string" ? item.name.trim() : "";
+    const description = typeof item?.description === "string" ? item.description.trim() : null;
+    const category = typeof item?.category === "string" ? item.category.trim() : null;
+    const price = Number(item?.price);
+    const stock = Number(item?.stock);
+    if (!name || name.length > 255 || !Number.isFinite(price) || price < 0 ||
+        !Number.isInteger(stock) || stock < 0 || (category && category.length > 100)) {
+      return res.status(400).json({
+        message: `ข้อมูลสินค้าแถวที่ ${index + 1} ไม่ถูกต้อง (ต้องมี name, price และ stock)`,
+      });
+    }
+    normalized.push({ name, description: description || null, category: category || null, price, stock });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    for (const item of normalized) {
+      await conn.query(
+        "INSERT INTO products (name, description, category, price, stock, image_url) VALUES (?, ?, ?, ?, ?, NULL)",
+        [item.name, item.description, item.category, item.price, item.stock]
+      );
+    }
+    await conn.commit();
+    res.status(201).json({ message: `นำเข้าสินค้าสำเร็จ ${normalized.length} รายการ`, imported: normalized.length });
+  } catch (err) {
+    await conn.rollback();
+    console.error(err);
+    res.status(500).json({ message: "ไม่สามารถนำเข้าสินค้าจากไฟล์ JSON ได้" });
+  } finally {
+    conn.release();
+  }
+});
+
 // GET /api/products/:id
 router.get("/:id", verifyToken, async (req, res) => {
   try {
@@ -154,11 +227,11 @@ router.post("/", verifyToken, requireAdmin, handleUpload, verifyImage, rules, as
     return res.status(400).json({ message: errors.array()[0].msg });
   }
 
-  const { name, description, price, stock } = req.body;
+  const { name, description, category, price, stock } = req.body;
   try {
     const [r] = await pool.query(
-      "INSERT INTO products (name, description, price, stock, image_url) VALUES (?, ?, ?, ?, ?)",
-      [name, description || null, price, stock, image]
+      "INSERT INTO products (name, description, category, price, stock, image_url) VALUES (?, ?, ?, ?, ?, ?)",
+      [name, description || null, category || null, price, stock, image]
     );
     res.status(201).json({ message: "เพิ่มสินค้าสำเร็จ", product_id: r.insertId });
   } catch (err) {
@@ -178,7 +251,7 @@ router.put("/:id", verifyToken, requireAdmin, handleUpload, verifyImage, rules, 
     return res.status(400).json({ message: errors.array()[0].msg });
   }
 
-  const { name, description, price, stock } = req.body;
+  const { name, description, category, price, stock } = req.body;
   try {
     const [old] = await pool.query("SELECT image_url FROM products WHERE product_id = ?", [req.params.id]);
     if (!old[0]) {
@@ -191,8 +264,8 @@ router.put("/:id", verifyToken, requireAdmin, handleUpload, verifyImage, rules, 
     else if (req.body.remove_image === "1") image = null;
 
     await pool.query(
-      "UPDATE products SET name=?, description=?, price=?, stock=?, image_url=? WHERE product_id=?",
-      [name, description || null, price, stock, image, req.params.id]
+      "UPDATE products SET name=?, description=?, category=?, price=?, stock=?, image_url=? WHERE product_id=?",
+      [name, description || null, category || null, price, stock, image, req.params.id]
     );
     if (image !== old[0].image_url) removeLocalImage(old[0].image_url);
     res.json({ message: "แก้ไขสินค้าสำเร็จ" });

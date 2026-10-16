@@ -13,9 +13,19 @@ const loading = ref(false)
 const showModal = ref(false)
 const editingId = ref(null)
 const saving = ref(false)
+const importing = ref(false)
 const formError = ref('')
-const emptyForm = () => ({ name: '', description: '', price: '', stock: '' })
+const emptyForm = () => ({ name: '', description: '', category: '', price: '', stock: '' })
 const form = ref(emptyForm())
+
+// ใช้รายการหมวดหมู่คงที่เพื่อให้ข้อมูลค้นหาและกรองสินค้าใช้ชื่อเดียวกัน
+const categoryOptions = [
+  'โปรไบโอติกแบบแคปซูล',
+  'โปรไบโอติกแบบผง',
+  'โปรไบโอติกแบบเม็ด',
+  'โปรไบโอติกสำหรับเด็ก',
+  'อื่น ๆ',
+]
 
 // ---- รูปสินค้า ----
 const imageFile = ref(null)
@@ -58,6 +68,7 @@ function buildFormData(f) {
   const fd = new FormData()
   fd.append('name', f.name.trim())
   fd.append('description', f.description || '')
+  fd.append('category', f.category?.trim() || '')
   fd.append('price', f.price)
   fd.append('stock', f.stock)
   if (imageFile.value) fd.append('image', imageFile.value)
@@ -99,6 +110,7 @@ function openEdit(p) {
   form.value = {
     name: p.name,
     description: p.description || '',
+    category: p.category || '',
     price: p.price,
     stock: p.stock,
   }
@@ -127,6 +139,29 @@ async function save() {
     formError.value = e.response?.data?.message || 'บันทึกไม่สำเร็จ'
   } finally {
     saving.value = false
+  }
+}
+
+// ส่งไฟล์ JSON ให้ backend ตรวจสอบและเพิ่มสินค้าทั้งชุดด้วย transaction
+async function importJson(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+  if (!file.name.toLowerCase().endsWith('.json')) {
+    return Swal.fire({ icon: 'error', title: 'ไฟล์ไม่ถูกต้อง', text: 'กรุณาเลือกไฟล์นามสกุล .json' })
+  }
+
+  importing.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const { data } = await http.post('/products/import-json', fd)
+    await loadProducts()
+    Swal.fire({ icon: 'success', title: 'นำเข้าสินค้าสำเร็จ', text: data.message, timer: 1800, showConfirmButton: false })
+  } catch (e) {
+    Swal.fire({ icon: 'error', title: 'นำเข้าสินค้าไม่สำเร็จ', text: e.response?.data?.message || 'กรุณาตรวจสอบไฟล์ JSON' })
+  } finally {
+    importing.value = false
   }
 }
 
@@ -163,9 +198,16 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
       <div class="flex flex-wrap items-center gap-3 justify-between">
         <input v-model="search" type="search" placeholder="ค้นหาชื่อ รายละเอียด หรือรหัสสินค้า"
           class="w-full sm:w-80 border rounded-full px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-400" />
-        <button @click="openAdd" class="bg-[#14532D] text-white rounded-full px-5 py-2 hover:bg-[#0f4023]">
-          เพิ่มสินค้า
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <label class="cursor-pointer border border-[#14532D] text-[#14532D] rounded-full px-5 py-2 hover:bg-[#E3F0E6]"
+            :class="importing ? 'opacity-60 pointer-events-none' : ''">
+            {{ importing ? 'กำลังนำเข้า...' : 'นำเข้า JSON' }}
+            <input type="file" accept="application/json,.json" class="hidden" @change="importJson" :disabled="importing" />
+          </label>
+          <button @click="openAdd" class="bg-[#14532D] text-white rounded-full px-5 py-2 hover:bg-[#0f4023]">
+            เพิ่มสินค้า
+          </button>
+        </div>
       </div>
 
       <div class="mt-6 bg-white rounded-2xl overflow-x-auto">
@@ -174,15 +216,16 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
             <tr>
               <th class="px-4 py-3">รหัส</th>
               <th class="px-4 py-3">ชื่อสินค้า</th>
+              <th class="px-4 py-3">หมวดหมู่</th>
               <th class="px-4 py-3 text-right">ราคา (฿)</th>
               <th class="px-4 py-3 text-right">สต็อก</th>
               <th class="px-4 py-3 text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-if="loading"><td colspan="5" class="px-4 py-8 text-center text-gray-500">กำลังโหลด...</td></tr>
+            <tr v-if="loading"><td colspan="6" class="px-4 py-8 text-center text-gray-500">กำลังโหลด...</td></tr>
             <tr v-else-if="products.length === 0">
-              <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+              <td colspan="6" class="px-4 py-8 text-center text-gray-500">
                 {{ search ? 'ไม่พบสินค้าที่ตรงกับคำค้นหา' : 'ยังไม่มีสินค้า กดปุ่ม "เพิ่มสินค้า" เพื่อเริ่มต้น' }}
               </td>
             </tr>
@@ -199,6 +242,7 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
                   </div>
                 </div>
               </td>
+              <td class="px-4 py-3">{{ p.category || '-' }}</td>
               <td class="px-4 py-3 text-right">{{ baht(p.price) }}</td>
               <td class="px-4 py-3 text-right" :class="p.stock === 0 ? 'text-red-600 font-medium' : ''">{{ p.stock }}</td>
               <td class="px-4 py-3 text-right whitespace-nowrap">
@@ -225,6 +269,20 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
         <div>
           <label class="block text-sm mb-1">รายละเอียด</label>
           <textarea v-model="form.description" rows="3" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">หมวดหมู่สินค้า</label>
+          <select v-model="form.category"
+            class="w-full border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-400">
+            <option value="">ไม่ระบุหมวดหมู่</option>
+            <!-- แสดงค่าเดิมที่อาจมาจากข้อมูลเก่า เพื่อป้องกันไม่ให้แก้ไขแล้วข้อมูลหาย -->
+            <option v-if="form.category && !categoryOptions.includes(form.category)" :value="form.category">
+              {{ form.category }} (หมวดหมู่เดิม)
+            </option>
+            <option v-for="category in categoryOptions" :key="category" :value="category">
+              {{ category }}
+            </option>
+          </select>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
