@@ -17,6 +17,15 @@ const formError = ref('')
 const emptyForm = () => ({ name: '', description: '', category: '', price: '', stock: '' })
 const form = ref(emptyForm())
 
+// ใช้รายการหมวดหมู่คงที่เพื่อให้ข้อมูลค้นหาและกรองสินค้าใช้ชื่อเดียวกัน
+const categoryOptions = [
+  'โปรไบโอติกแบบแคปซูล',
+  'โปรไบโอติกแบบผง',
+  'โปรไบโอติกแบบเม็ด',
+  'โปรไบโอติกสำหรับเด็ก',
+  'อื่น ๆ',
+]
+
 // ---- รูปสินค้า ----
 const imageFile = ref(null)
 const imagePreview = ref('')
@@ -232,8 +241,17 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
         </div>
         <div>
           <label class="block text-sm mb-1">หมวดหมู่สินค้า</label>
-          <input v-model="form.category" maxlength="100" placeholder="เช่น แคปซูล, ผงชงดื่ม"
-            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" />
+          <select v-model="form.category"
+            class="w-full border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-400">
+            <option value="">ไม่ระบุหมวดหมู่</option>
+            <!-- แสดงค่าเดิมที่อาจมาจากข้อมูลเก่า เพื่อป้องกันไม่ให้แก้ไขแล้วข้อมูลหาย -->
+            <option v-if="form.category && !categoryOptions.includes(form.category)" :value="form.category">
+              {{ form.category }} (หมวดหมู่เดิม)
+            </option>
+            <option v-for="category in categoryOptions" :key="category" :value="category">
+              {{ category }}
+            </option>
+          </select>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
