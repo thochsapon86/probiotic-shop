@@ -7,6 +7,7 @@ import http from '../api/http'
 
 const router = useRouter()
 
+// form เก็บข้อมูลสมัครสมาชิก; confirmPassword ใช้ตรวจหน้าเว็บและไม่ส่งไป Backend
 const form = ref({
   username: '',
   email: '',
@@ -89,6 +90,7 @@ async function onSubmit() {
 </script>
 
 <template>
+  <!-- ฟอร์มสมัครสมาชิกตรวจซ้ำทั้งฝั่ง Client และ Backend -->
   <div class="min-h-screen flex items-center justify-center bg-green-50 p-4">
     <form @submit.prevent="onSubmit" class="w-full max-w-md bg-white rounded-2xl shadow p-8 space-y-4">
       <h1 class="text-2xl font-bold text-green-700 text-center">Probiotic Shop</h1>

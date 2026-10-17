@@ -5,6 +5,7 @@ import { useRoute, RouterLink } from 'vue-router'
 import http from '../api/http'
 
 const route = useRoute()
+// token อยู่ใน query string จากลิงก์อีเมล ส่วน password ใหม่จะถูกตรวจซ้ำโดย Backend
 const password = ref('')
 const confirmPassword = ref('')
 const loading = ref(false)
@@ -31,6 +32,7 @@ async function submit() {
 </script>
 
 <template>
+  <!-- หน้า Reset ใช้ได้เมื่อมี token จาก Forgot Password -->
   <div class="min-h-screen flex items-center justify-center bg-green-50 p-4">
     <form v-if="!success" @submit.prevent="submit" class="w-full max-w-sm bg-white rounded-2xl shadow p-8 space-y-4">
       <h1 class="text-2xl font-bold text-green-700 text-center">ตั้งรหัสผ่านใหม่</h1>

@@ -11,6 +11,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+// order จะเป็น null ระหว่างโหลด และถูกเติมด้วยข้อมูลจาก /orders/:id
 const order = ref(null)
 const loading = ref(true)
 const error = ref('')
@@ -70,6 +71,7 @@ async function cancelOrder() {
 </script>
 
 <template>
+  <!-- แสดงรายละเอียดออเดอร์ก่อนเข้าสู่ขั้นตอน Payment -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 

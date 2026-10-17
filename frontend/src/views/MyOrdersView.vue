@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+// หน้านี้เป็น implementation เดิมของรายการ Order; route หลักปัจจุบันรวมไว้ใน Cart แล้ว
 const orders = ref([])
 const status = ref('')
 const loading = ref(true)

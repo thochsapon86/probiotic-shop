@@ -20,6 +20,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const auth = useAuthStore()
 const router = useRouter()
+// summary ใช้กับการ์ดตัวเลข ส่วน dailySales/productSales ใช้สร้างกราฟสองชุด
 const loading = ref(true)
 const error = ref('')
 const from = ref('')
@@ -135,6 +136,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- Dashboard เป็นหน้าสำหรับ Admin เท่านั้นตาม route meta -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 
@@ -144,7 +146,8 @@ onMounted(() => {
           <p class="text-sm text-[#3E5A52]">สำหรับผู้ดูแลระบบ</p>
           <h1 class="text-3xl font-bold">Dashboard ยอดขาย</h1>
         </div>
-        <form class="flex flex-wrap items-end gap-2" @submit.prevent="search">
+      <!-- ผู้ใช้เลือกช่วงวัน แล้ว submit เพื่อเรียก Dashboard API ใหม่ -->
+      <form class="flex flex-wrap items-end gap-2" @submit.prevent="search">
           <label class="text-sm">ตั้งแต่<input v-model="from" type="date" class="block mt-1 border rounded-lg px-3 py-2 bg-white" /></label>
           <label class="text-sm">ถึง<input v-model="to" type="date" class="block mt-1 border rounded-lg px-3 py-2 bg-white" /></label>
           <button class="bg-[#14532D] text-white rounded-full px-5 py-2.5">ดูรายงาน</button>

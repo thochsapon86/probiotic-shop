@@ -10,6 +10,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+// order คือออเดอร์ที่กำลังชำระ ส่วน method/reference คือข้อมูลจากฟอร์มลูกค้า
 const order = ref(null)
 const loading = ref(true)
 const error = ref('')
@@ -85,6 +86,7 @@ async function submit() {
 </script>
 
 <template>
+  <!-- หน้านี้เปิดได้เฉพาะ Order ที่ยังมีสถานะ pending -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 

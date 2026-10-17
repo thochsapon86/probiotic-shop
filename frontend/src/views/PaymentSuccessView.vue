@@ -10,6 +10,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+// payment ใช้แสดงผลลัพธ์จาก API ส่วน receiptLoading คุมปุ่มสร้าง/เปิด PDF
 const payment = ref(null)
 const loading = ref(true)
 const error = ref('')
@@ -55,6 +56,7 @@ async function openReceipt() {
 </script>
 
 <template>
+  <!-- แสดงผลหลัง Payment สำเร็จและให้ดาวน์โหลดใบเสร็จได้ -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 

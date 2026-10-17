@@ -12,6 +12,7 @@ const auth = useAuthStore()
 const cart = useCartStore()
 const router = useRouter()
 
+// ส่วนบนของ state ใช้กับตะกร้าปัจจุบัน ส่วน orders ใช้แสดงประวัติการสั่งซื้อในหน้าเดียวกัน
 const submitting = ref(false)
 const error = ref('')
 const orders = ref([])
@@ -90,6 +91,7 @@ onMounted(loadOrders)
 </script>
 
 <template>
+  <!-- Cart มีสองส่วน: รายการสินค้าในตะกร้า และประวัติ Order แบบแท็บสถานะ -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 
@@ -103,6 +105,7 @@ onMounted(loadOrders)
         </RouterLink>
       </div>
 
+      <!-- ถ้ามีสินค้า จะแสดงรายการแก้จำนวนและปุ่มสร้าง Order -->
       <template v-else>
         <div class="mt-6 bg-white rounded-3xl divide-y">
           <div v-for="i in cart.items" :key="i.product_id" class="p-4 flex flex-wrap items-center gap-4">
@@ -138,6 +141,7 @@ onMounted(loadOrders)
       </template>
 
       <!-- รายการออเดอร์อยู่ในหน้าตะกร้าเดียวกัน โดยแบ่งสถานะแบบร้านค้าออนไลน์ -->
+      <!-- รายการ Order โหลดจาก /orders/mine และกรองใน computed ตามแท็บ -->
       <section class="mt-10">
         <div class="flex flex-wrap items-end justify-between gap-3">
           <div>

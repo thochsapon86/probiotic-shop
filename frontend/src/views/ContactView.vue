@@ -20,6 +20,7 @@ const members = [
 </script>
 
 <template>
+  <!-- หน้า Contact แสดงข้อมูลคงที่ของร้านและสมาชิกกลุ่ม -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 

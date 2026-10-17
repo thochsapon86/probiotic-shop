@@ -13,6 +13,7 @@ const auth = useAuthStore()
 const cart = useCartStore()
 const router = useRouter()
 
+// products/categories เป็นข้อมูลจาก API; search/category เป็นตัวกรองที่ส่งกลับไปทุกครั้งที่เปลี่ยน
 const products = ref([])
 const categories = ref([])
 const search = ref('')
@@ -81,12 +82,14 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
 </script>
 
 <template>
+  <!-- หน้าสินค้าสำหรับ Customer: ค้นหา กรองหมวดหมู่ และเพิ่มลงตะกร้า -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 
     <main class="max-w-6xl mx-auto px-5 py-8">
       <h1 class="text-3xl font-bold">สินค้าทั้งหมด</h1>
 
+      <!-- ปุ่ม Category จะเปลี่ยนค่า category และ trigger watch(loadProducts) -->
       <div class="mt-5 flex flex-wrap items-center gap-3">
         <input v-model="search" type="search" placeholder="ค้นหาสินค้า"
           class="w-full sm:w-72 border rounded-full px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-400" />
