@@ -12,6 +12,7 @@ const error = ref('')
 const success = ref(false)
 
 async function submit() {
+  // ส่ง token จาก URL พร้อม password ใหม่ให้ Backend ตรวจ token และ policy อีกครั้ง
   error.value = ''
   if (password.value !== confirmPassword.value) {
     error.value = 'รหัสผ่านไม่ตรงกัน'

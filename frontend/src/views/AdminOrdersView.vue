@@ -24,6 +24,7 @@ const statusClass = {
 }
 
 async function loadOrders() {
+  // Admin API รองรับค้นหาเลข Order/username และกรอง status จาก query string
   loading.value = true
   error.value = ''
   try {

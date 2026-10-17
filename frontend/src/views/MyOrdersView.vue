@@ -23,6 +23,7 @@ const statusClass = {
 }
 
 async function loadOrders() {
+  // หน้านี้เป็น implementation เดิมของรายการ Order ปัจจุบัน route หลักใช้ Cart แทน
   loading.value = true
   error.value = ''
   try {

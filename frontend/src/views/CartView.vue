@@ -45,6 +45,7 @@ const dateText = (value) => new Date(value).toLocaleString('th-TH', {
 })
 
 async function loadOrders() {
+  // โหลด Order ทั้งหมดครั้งเดียว แล้วให้ computed filteredOrders แยกตาม tab ฝั่ง Client
   ordersLoading.value = true
   ordersError.value = ''
   try {
@@ -63,6 +64,7 @@ async function loadOrders() {
 }
 
 async function checkout() {
+  // ส่งเฉพาะ product_id/quantity; Backend จะอ่านราคาและตรวจ stock จากฐานข้อมูลอีกครั้ง
   error.value = ''
   submitting.value = true
   try {

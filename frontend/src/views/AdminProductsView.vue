@@ -38,6 +38,7 @@ const shownImage = computed(() =>
 )
 
 function resetImage(current) {
+  // คืนค่า state รูปภาพเมื่อเปิด Add/Edit และคืน object URL ที่ Browser สร้างไว้
   if (imagePreview.value) URL.revokeObjectURL(imagePreview.value)
   imageFile.value = null
   imagePreview.value = ''
@@ -46,6 +47,7 @@ function resetImage(current) {
 }
 
 function onFileChange(e) {
+  // ตรวจชนิดและขนาดรูปเบื้องต้นก่อนเตรียม preview; Backend จะตรวจ signature ซ้ำ
   const file = e.target.files[0]
   formError.value = ''
   if (!file) return resetImage(currentImage.value)
@@ -66,6 +68,7 @@ function onFileChange(e) {
 }
 
 function buildFormData(f) {
+  // FormData จำเป็นเพราะ request อาจมีทั้ง field และไฟล์รูป
   const fd = new FormData()
   fd.append('name', f.name.trim())
   fd.append('description', f.description || '')
@@ -78,6 +81,7 @@ function buildFormData(f) {
 }
 
 async function loadProducts() {
+  // โหลดรายการสินค้าใหม่หลังค้นหา เพิ่ม แก้ไข ลบ หรือ Import สำเร็จ
   loading.value = true
   try {
     const { data } = await http.get('/products', { params: { search: search.value } })
@@ -99,6 +103,7 @@ watch(search, () => {
 onMounted(loadProducts)
 
 function openAdd() {
+  // เปิด modal ในโหมดเพิ่มสินค้าและล้างค่าเดิมทั้งหมด
   editingId.value = null
   form.value = emptyForm()
   resetImage('')
@@ -107,6 +112,7 @@ function openAdd() {
 }
 
 function openEdit(p) {
+  // เติมข้อมูลสินค้าเดิมลง form เพื่อให้ผู้ใช้แก้เฉพาะ field ที่ต้องการ
   editingId.value = p.product_id
   form.value = {
     name: p.name,
@@ -121,6 +127,7 @@ function openEdit(p) {
 }
 
 async function save() {
+  // ตรวจข้อมูลฝั่งหน้าเว็บก่อน แล้วเลือก POST หรือ PUT ตาม editingId
   formError.value = ''
   const f = form.value
   if (!f.name.trim()) return (formError.value = 'กรุณากรอกชื่อสินค้า')
@@ -145,6 +152,7 @@ async function save() {
 
 // ส่งไฟล์ JSON ให้ backend ตรวจสอบและเพิ่มสินค้าทั้งชุดด้วย transaction
 async function importJson(event) {
+  // ส่งไฟล์ JSON ไป endpoint Admin; Backend จะ validate ทั้งชุดและใช้ transaction
   const file = event.target.files?.[0]
   event.target.value = ''
   if (!file) return
@@ -167,6 +175,7 @@ async function importJson(event) {
 }
 
 async function remove(p) {
+  // ขอคำยืนยันก่อนลบ และแสดงข้อความจาก Backend หากติด foreign key ของ Order
   const r = await Swal.fire({
     icon: 'warning',
     title: `ลบ "${p.name}" ?`,

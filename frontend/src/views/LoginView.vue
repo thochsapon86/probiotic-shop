@@ -15,6 +15,7 @@ const loading = ref(false)
 const error = ref('')
 
 async function onSubmit() {
+  // ส่ง username/password เข้า Auth Store; สำเร็จแล้ว Store จะเก็บ JWT และ redirect ตาม role
   error.value = ''
   if (!username.value.trim() || !password.value) {
     error.value = 'กรุณากรอก Username และ Password'

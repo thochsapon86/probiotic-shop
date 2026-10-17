@@ -17,6 +17,7 @@ const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+// อนุญาตเฉพาะ origin ที่อยู่ใน CLIENT_URL และรองรับหลาย origin คั่นด้วย comma
 const corsOptions = {
   // อนุญาต request ที่ไม่มี Origin ด้วย เช่น health check จาก server หรือ curl
   origin: (origin, callback) => {
@@ -29,6 +30,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+// อ่าน JSON body ก่อนส่ง request เข้า route เช่น Login หรือสร้าง Order
 app.use(morgan("dev"));
 
 app.use(
@@ -37,6 +39,7 @@ app.use(
     setHeaders: (res) => res.set("Cross-Origin-Resource-Policy", "cross-origin"),
   })
 );
+// เปิดไฟล์รูปสินค้าให้ Browser ขอผ่าน URL /uploads ได้
 
 app.get("/", (req, res) => {
   res.send("Probiotic Shop API");

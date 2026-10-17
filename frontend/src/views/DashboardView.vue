@@ -43,6 +43,7 @@ function setDefaultRange() {
 const baht = (value) => Number(value || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })
 const shortDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
 const chartData = computed(() => ({
+  // แปลง daily_sales จาก API เป็น dataset ที่ vue-chartjs ต้องการ
   labels: dailySales.value.map((item) => shortDate(item.date)),
   datasets: [{
     label: 'ยอดขาย (บาท)',
@@ -69,6 +70,7 @@ const chartOptions = {
   },
 }
 const productChartData = computed(() => ({
+  // แปลง product_sales เป็นกราฟยอดขายแยกสินค้า
   labels: productSales.value.map((item) => item.product_name),
   datasets: [{
     label: 'ยอดขายสินค้า (บาท)',
@@ -97,6 +99,7 @@ const productChartOptions = {
 }
 
 async function loadDashboard() {
+  // เรียก Dashboard API ตามช่วงวันที่ และเก็บ summary/chart data ใน reactive state
   error.value = ''
   loading.value = true
   try {
@@ -117,6 +120,7 @@ async function loadDashboard() {
 }
 
 function search() {
+  // ปุ่มค้นหาจะเรียก API ใหม่เมื่อผู้ดูแลเปลี่ยนช่วงวันที่
   if (!from.value || !to.value || from.value > to.value) {
     error.value = 'กรุณาเลือกช่วงวันที่ให้ถูกต้อง'
     return

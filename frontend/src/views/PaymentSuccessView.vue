@@ -20,6 +20,7 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
 const fmtDate = (d) => new Date(d).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })
 
 onMounted(async () => {
+  // โหลดข้อมูล Payment สำเร็จและล้าง pendingOrderId เพื่อซ่อนปุ่มชำระต่อ
   try {
     const { data } = await http.get(`/payments/order/${route.params.id}`)
     payment.value = data
@@ -38,6 +39,7 @@ onMounted(async () => {
 })
 
 async function openReceipt() {
+  // ขอ PDF แบบ blob แล้วสร้าง temporary URL ให้ Browser เปิดใน tab ใหม่
   receiptLoading.value = true
   try {
     const { data } = await http.get(`/payments/order/${route.params.id}/receipt`, { responseType: 'blob' })

@@ -8,6 +8,7 @@ class OrderError extends Error {}
 // POST /api/orders   body: { items: [{ product_id, quantity }] }
 // ผู้สั่งซื้อ = user_id จาก JWT, ราคา = ราคาจากตาราง products (ไม่เชื่อราคาจากหน้าเว็บ)
 router.post("/", verifyToken, async (req, res) => {
+  // ราคาจะอ่านจาก products ในฐานข้อมูล ไม่รับราคาจาก Client เพื่อป้องกันการแก้ราคาเอง
   const raw = Array.isArray(req.body.items) ? req.body.items : [];
   if (raw.length === 0) return res.status(400).json({ message: "ตะกร้าสินค้าว่าง" });
 
@@ -23,6 +24,7 @@ router.post("/", verifyToken, async (req, res) => {
 
   const conn = await pool.getConnection();
   try {
+    // Transaction นี้ล็อกสินค้า ตรวจ stock สร้าง Order/รายละเอียด และหัก stock ให้สำเร็จพร้อมกัน
     await conn.beginTransaction();
 
     let totalSatang = 0;
@@ -69,6 +71,7 @@ router.post("/", verifyToken, async (req, res) => {
 
 // GET /api/orders?status=paid&search=username-or-order-id (admin เท่านั้น)
 router.get("/", verifyToken, requireAdmin, async (req, res) => {
+  // Admin ค้นหาได้ด้วยเลข Order, username, ชื่อลูกค้า และกรองสถานะได้
   const status = String(req.query.status || "").trim();
   const search = String(req.query.search || "").trim();
   const allowedStatuses = ["pending", "paid", "cancelled"];
@@ -109,6 +112,7 @@ router.get("/", verifyToken, requireAdmin, async (req, res) => {
 
 // GET /api/orders/mine?status=pending (รายการออร์เดอร์ของลูกค้าที่ login อยู่)
 router.get("/mine", verifyToken, async (req, res) => {
+  // Customer เห็นเฉพาะ Order ที่ user_id ตรงกับ JWT ของตัวเอง
   const status = String(req.query.status || "").trim();
   const allowedStatuses = ["pending", "paid", "cancelled"];
   if (status && !allowedStatuses.includes(status)) {
@@ -136,6 +140,7 @@ router.get("/mine", verifyToken, async (req, res) => {
 
 // GET /api/orders/:id  (เจ้าของออร์เดอร์หรือ admin เท่านั้น)
 router.get("/:id", verifyToken, async (req, res) => {
+  // อ่านรายละเอียด Order พร้อมข้อมูลลูกค้าและรายการสินค้า โดยจำกัดเจ้าของหรือ Admin เท่านั้น
   try {
     const [rows] = await pool.query(
       `SELECT o.order_id, o.user_id, o.order_date, o.total_amount, o.status,
@@ -165,6 +170,7 @@ router.get("/:id", verifyToken, async (req, res) => {
 
 // POST /api/orders/:id/cancel  ยกเลิกออร์เดอร์ที่ยังรอชำระเงิน และคืนสต็อก
 router.post("/:id/cancel", verifyToken, async (req, res) => {
+  // ยกเลิกได้เฉพาะ Pending และคืน stock ภายใน transaction เดียวกับการเปลี่ยนสถานะ
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();

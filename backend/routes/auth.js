@@ -19,6 +19,7 @@ const resetPasswordRules = [
 ];
 
 function createMailer() {
+  // ถ้าไม่มี SMTP_HOST จะคืน null เพื่อให้โหมด development แสดง reset link ใน console แทน
   if (!process.env.SMTP_HOST) return null;
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -39,6 +40,7 @@ router.post(
   loginLimiter,
   [body('username').trim().notEmpty(), body('password').notEmpty()],
   async (req, res) => {
+    // 1) ตรวจ input 2) ค้นหาผู้ใช้ 3) เทียบ password hash 4) ออก JWT
     if (!validationResult(req).isEmpty())
       return res.status(400).json({ message: 'กรุณากรอก Username และ Password' })
 
@@ -77,6 +79,7 @@ const forgotPasswordLimiter = rateLimit({
 
 // ไม่เปิดเผยว่า email มีบัญชีอยู่หรือไม่ เพื่อป้องกันการไล่ตรวจรายชื่อผู้ใช้
 router.post("/forgot-password", forgotPasswordLimiter, [body("email").trim().isEmail().normalizeEmail()], async (req, res) => {
+  // ใช้ข้อความตอบกลับกลางเพื่อไม่เปิดเผยว่า email ใดมีบัญชีอยู่ในระบบ
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ message: "รูปแบบอีเมลไม่ถูกต้อง" });
 
@@ -114,6 +117,7 @@ router.post("/forgot-password", forgotPasswordLimiter, [body("email").trim().isE
 });
 
 router.post("/reset-password", [body("token").isHexadecimal().isLength({ min: 64, max: 64 }), ...resetPasswordRules], async (req, res) => {
+  // Hash token ที่รับมาแล้วค้นหา token hash ที่ยังไม่หมดอายุในฐานข้อมูล
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ message: errors.array()[0].msg || "ข้อมูลไม่ถูกต้อง" });
 
@@ -163,6 +167,7 @@ const registerRules = [
 ];
 
 router.post("/register", registerLimiter, registerRules, async (req, res) => {
+  // Register สร้างเฉพาะ role customer และคืน JWT เพื่อใช้ทดสอบ API ต่อใน Postman
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ message: errors.array()[0].msg });

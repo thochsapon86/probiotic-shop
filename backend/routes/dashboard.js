@@ -6,12 +6,14 @@ const { verifyToken, requireAdmin } = require("../middleware/auth");
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function isValidDate(value) {
+  // ตรวจทั้งรูปแบบ YYYY-MM-DD และวันที่มีอยู่จริง ป้องกัน query ผิดรูปแบบ
   if (!DATE_RE.test(value)) return false;
   const date = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
 function defaultDateRange() {
+  // ถ้าไม่ได้ส่งช่วงวันมา Dashboard จะแสดง 7 วันล่าสุด
   const today = new Date();
   const from = new Date(today);
   from.setDate(today.getDate() - 6);
@@ -24,6 +26,7 @@ function defaultDateRange() {
 // GET /api/dashboard/sales?from=YYYY-MM-DD&to=YYYY-MM-DD
 // ใช้รายการชำระเงินที่สำเร็จเป็นแหล่งข้อมูลยอดขาย เพื่อไม่รวมออร์เดอร์ pending/cancelled
 router.get("/sales", verifyToken, requireAdmin, async (req, res) => {
+  // ใช้ payments ที่ success เป็นแหล่งยอดขาย เพื่อไม่รวม Pending/Cancelled
   const defaults = defaultDateRange();
   const from = String(req.query.from || defaults.from);
   const to = String(req.query.to || defaults.to);

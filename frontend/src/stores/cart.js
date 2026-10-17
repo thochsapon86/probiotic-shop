@@ -8,15 +8,18 @@ export const useCartStore = defineStore('cart', {
     items: JSON.parse(localStorage.getItem(KEY) || '[]'),
   }),
   getters: {
+    // getters คำนวณค่าจากรายการปัจจุบันแบบ reactive ทุกครั้งที่ items เปลี่ยน
     count: (s) => s.items.reduce((n, i) => n + i.quantity, 0),
     total: (s) => s.items.reduce((n, i) => n + i.price * i.quantity, 0),
   },
   actions: {
     save() {
+      // ทำให้ตะกร้ายังอยู่หลัง refresh หรือเปลี่ยนหน้า
       localStorage.setItem(KEY, JSON.stringify(this.items))
     },
     // เพิ่มสินค้าตามรหัส product_id คืนค่า false ถ้าเกินสต็อก
     add(p) {
+      // ถ้ามีสินค้าเดิมจะเพิ่มจำนวน แต่ไม่ให้เกิน stock ที่ API ส่งมา
       const found = this.items.find((i) => i.product_id === p.product_id)
       if (found) {
         if (found.quantity >= p.stock) return false
@@ -37,6 +40,7 @@ export const useCartStore = defineStore('cart', {
       return true
     },
     setQty(productId, qty) {
+      // บังคับจำนวนให้อยู่ระหว่าง 1 ถึง stock และสูงสุด 99 ชิ้น
       const item = this.items.find((i) => i.product_id === productId)
       if (!item) return
       const n = Math.floor(Number(qty)) || 1

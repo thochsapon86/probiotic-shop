@@ -35,6 +35,7 @@ const methods = {
 const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2 })
 
 onMounted(async () => {
+  // โหลด Order ตาม URL และไม่อนุญาตให้เปิดชำระซ้ำถ้าจ่ายแล้วหรือถูกยกเลิก
   try {
     const { data } = await http.get(`/orders/${route.params.id}`)
     if (data.status === 'paid') {
@@ -55,6 +56,7 @@ onMounted(async () => {
 })
 
 async function submit() {
+  // ตรวจข้อมูล payment แล้วส่งให้ Backend; จำนวนเงินไม่ได้ส่งจากหน้าเว็บเพราะ Backend อ่านจาก Order
   formError.value = ''
   const ref_ = reference.value.trim()
   if (!/^[A-Za-z0-9-]{6,30}$/.test(ref_)) {

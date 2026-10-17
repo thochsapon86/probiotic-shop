@@ -11,6 +11,7 @@ const REF_RE = /^[A-Za-z0-9-]{6,30}$/;
 // POST /api/payments   body: { order_id, payment_method, transaction_ref }
 // จำนวนเงินอ่านจากตาราง orders เอง ไม่รับจากหน้าเว็บ
 router.post("/", verifyToken, async (req, res) => {
+  // รับ payment เฉพาะเจ้าของ Order; Admin ไม่สามารถชำระเงินแทนลูกค้าได้
   if (req.user.role === "admin")
     return res.status(403).json({ message: "Admin ไม่สามารถชำระเงินแทนลูกค้าได้" });
 
@@ -28,6 +29,7 @@ router.post("/", verifyToken, async (req, res) => {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+    // ล็อก Order ป้องกันการชำระซ้ำพร้อมกัน และตรวจ transaction_ref ซ้ำก่อน insert
 
     const [rows] = await conn.query(
       "SELECT order_id, user_id, total_amount, status FROM orders WHERE order_id = ? FOR UPDATE",
@@ -72,6 +74,7 @@ router.post("/", verifyToken, async (req, res) => {
 
 // GET /api/payments/order/:orderId  (เจ้าของออร์เดอร์หรือ admin)
 router.get("/order/:orderId", verifyToken, async (req, res) => {
+  // ใช้แสดงข้อมูลการชำระเงินล่าสุดของ Order ที่สำเร็จแล้ว
   try {
     const [rows] = await pool.query(
       `SELECT p.payment_id, p.order_id, p.amount, p.payment_method, p.payment_status,
@@ -96,6 +99,7 @@ router.get("/order/:orderId", verifyToken, async (req, res) => {
 // GET /api/payments/order/:orderId/receipt
 // สร้างใบเสร็จจากข้อมูลในฐานข้อมูล และอนุญาตเฉพาะเจ้าของออร์เดอร์หรือ admin
 router.get("/order/:orderId/receipt", verifyToken, async (req, res) => {
+  // รวมข้อมูล Payment, ลูกค้า และ Order detail เพื่อสร้าง PDF ใบเสร็จจากฐานข้อมูล
   try {
     const [rows] = await pool.query(
       `SELECT p.payment_id, p.order_id, p.amount, p.payment_method, p.transaction_ref, p.payment_date,

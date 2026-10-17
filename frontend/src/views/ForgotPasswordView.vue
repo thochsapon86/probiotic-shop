@@ -10,6 +10,7 @@ const message = ref('')
 const error = ref('')
 
 async function submit() {
+  // ส่ง email ไปขอลิงก์ reset; Backend จะตอบข้อความกลางเพื่อป้องกัน account enumeration
   error.value = ''
   message.value = ''
   loading.value = true

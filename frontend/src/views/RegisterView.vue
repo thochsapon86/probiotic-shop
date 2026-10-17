@@ -22,6 +22,7 @@ const error = ref('')
 
 // เงื่อนไข password (แสดงแบบ checklist สดๆ)
 const rules = computed(() => [
+  // คำนวณ checklist password แบบ reactive เพื่อให้ผู้ใช้เห็นเงื่อนไขผ่านทันที
   { label: 'อย่างน้อย 8 ตัวอักษร', ok: form.value.password.length >= 8 },
   { label: 'ตัวพิมพ์เล็ก (a-z)', ok: /[a-z]/.test(form.value.password) },
   { label: 'ตัวพิมพ์ใหญ่ (A-Z)', ok: /[A-Z]/.test(form.value.password) },
@@ -34,6 +35,7 @@ const passwordMatch = computed(
 )
 
 async function onSubmit() {
+  // trim ข้อมูล ตรวจเงื่อนไขฝั่ง Client แล้วส่งข้อมูลสมัครสมาชิกไป Backend
   error.value = ''
   const f = form.value
 

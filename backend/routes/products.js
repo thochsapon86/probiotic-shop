@@ -32,6 +32,7 @@ const jsonUpload = multer({
 });
 
 function handleJsonUpload(req, res, next) {
+  // multer เก็บ JSON ไว้ใน memory ไม่สร้างไฟล์ถาวรใน uploads
   jsonUpload.single("file")(req, res, (err) => {
     if (!err) return next();
     const message = err.code === "LIMIT_FILE_SIZE"
@@ -42,6 +43,7 @@ function handleJsonUpload(req, res, next) {
 }
 
 function handleUpload(req, res, next) {
+  // รับรูปสินค้าแบบ multipart/form-data และแปลง error ของ multer เป็นข้อความที่อ่านง่าย
   upload.single("image")(req, res, (err) => {
     if (!err) return next();
     const message =
@@ -58,12 +60,14 @@ const toDbPath = (file) => `/uploads/products/${file.filename}`;
 
 // ลบเฉพาะไฟล์ในโฟลเดอร์ uploads/products (ใช้ basename กัน path traversal)
 function removeLocalImage(dbPath) {
+  // ลบเฉพาะไฟล์ที่อยู่ใน uploads/products โดยใช้ basename ป้องกัน path traversal
   if (!dbPath || !dbPath.startsWith("/uploads/products/")) return;
   fs.unlink(path.join(UPLOAD_DIR, path.basename(dbPath)), () => {});
 }
 
 // ตรวจ "ลายเซ็นไฟล์" จริง เพราะ mimetype ที่เบราว์เซอร์ส่งมาปลอมได้
 function hasImageSignature(filePath) {
+  // ตรวจ magic bytes ของไฟล์จริง ไม่เชื่อ mimetype ที่ Browser ส่งมาเพียงอย่างเดียว
   const fd = fs.openSync(filePath, "r");
   const b = Buffer.alloc(12);
   fs.readSync(fd, b, 0, 12, 0);
@@ -74,6 +78,7 @@ function hasImageSignature(filePath) {
   return jpg || png || webp;
 }
 function verifyImage(req, res, next) {
+  // ถ้ารูปที่อัปโหลดไม่ใช่ JPG/PNG/WEBP จริง ให้ลบไฟล์ทิ้งและหยุด request
   if (req.file && !hasImageSignature(req.file.path)) {
     removeLocalImage(toDbPath(req.file));
     return res.status(400).json({ message: "ไฟล์ไม่ใช่รูปภาพที่ถูกต้อง" });
@@ -92,6 +97,7 @@ const rules = [
 // GET /api/products?search=คำค้น&category=หมวด  (ต้อง login)
 // admin เห็นสินค้าทั้งหมด / ลูกค้าเห็นเฉพาะสินค้าที่เปิดขาย (is_active = 1)
 router.get("/", verifyToken, async (req, res) => {
+  // Admin เห็นสินค้าทั้งหมด ส่วน Customer เห็นเฉพาะ is_active = 1 และกรอง search/category ได้
   try {
     const search = (req.query.search || "").trim();
     const category = (req.query.category || "").trim();
@@ -123,6 +129,7 @@ router.get("/", verifyToken, async (req, res) => {
 // GET /api/products/featured  (สาธารณะ ไม่ต้อง login ใช้แสดงบนหน้าแรก)
 // ตอนนี้ = สินค้าที่เปิดขายและมีสต็อก เรียงจากใหม่สุด สูงสุด 9 รายการ
 router.get("/featured", async (req, res) => {
+  // หน้าแรกเรียก endpoint นี้ได้โดยไม่ต้อง Login จึงเลือกเฉพาะสินค้าที่เปิดขายและมี stock
   try {
     const [rows] = await pool.query(
       `SELECT product_id, name, description, price, stock, image_url, category
@@ -140,6 +147,7 @@ router.get("/featured", async (req, res) => {
 
 // GET /api/products/categories  (ต้องอยู่ก่อน /:id)
 router.get("/categories", verifyToken, async (req, res) => {
+  // คืนชื่อ Category ที่ไม่ซ้ำ เพื่อสร้างปุ่มกรองบนหน้า Product
   try {
     const [rows] = await pool.query(
       "SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category <> '' AND is_active = 1 ORDER BY category"
@@ -153,6 +161,7 @@ router.get("/categories", verifyToken, async (req, res) => {
 
 // POST /api/products/import-json (admin) รับไฟล์ JSON ที่มี products เป็น array
 router.post("/import-json", verifyToken, requireAdmin, handleJsonUpload, async (req, res) => {
+  // อ่านไฟล์ ตรวจสินค้าทุกรายการก่อน แล้วค่อย insert ทั้งชุดใน transaction เดียว
   if (!req.file) return res.status(400).json({ message: "กรุณาเลือกไฟล์ JSON" });
 
   let payload;
@@ -221,6 +230,7 @@ router.get("/:id", verifyToken, async (req, res) => {
 
 // POST /api/products  (admin)  รับ multipart/form-data  ฟิลด์รูป = image
 router.post("/", verifyToken, requireAdmin, handleUpload, verifyImage, rules, async (req, res) => {
+  // เพิ่มสินค้าใหม่พร้อมรูป โดย validation จะทำงานก่อนเขียนข้อมูลลง MySQL
   const errors = validationResult(req);
   const image = req.file ? toDbPath(req.file) : null;
   if (!errors.isEmpty()) {
@@ -245,6 +255,7 @@ router.post("/", verifyToken, requireAdmin, handleUpload, verifyImage, rules, as
 // PUT /api/products/:id  (admin)
 // ไม่แนบรูป = คงรูปเดิม / แนบรูปใหม่ = แทนที่ / remove_image=1 = ลบรูป
 router.put("/:id", verifyToken, requireAdmin, handleUpload, verifyImage, rules, async (req, res) => {
+  // แก้ข้อมูลสินค้าและเปลี่ยนรูปได้ ถ้าไม่มีรูปใหม่จะคงรูปเดิมไว้
   const errors = validationResult(req);
   const newImage = req.file ? toDbPath(req.file) : null;
   if (!errors.isEmpty()) {
@@ -279,6 +290,7 @@ router.put("/:id", verifyToken, requireAdmin, handleUpload, verifyImage, rules, 
 
 // DELETE /api/products/:id  (admin)
 router.delete("/:id", verifyToken, requireAdmin, async (req, res) => {
+  // ลบสินค้าและรูปที่เกี่ยวข้อง แต่ฐานข้อมูลจะปฏิเสธการลบถ้าสินค้าเคยอยู่ใน Order
   try {
     const [old] = await pool.query("SELECT image_url FROM products WHERE product_id = ?", [req.params.id]);
     const [r] = await pool.query("DELETE FROM products WHERE product_id = ?", [req.params.id]);

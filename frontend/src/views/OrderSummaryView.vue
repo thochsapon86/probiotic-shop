@@ -27,6 +27,7 @@ const fmtDate = (d) =>
   new Date(d).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })
 
 onMounted(async () => {
+  // โหลดข้อมูล Order ตาม id และให้ Backend เป็นผู้ตรวจว่าเป็นเจ้าของหรือ Admin
   try {
     const { data } = await http.get(`/orders/${route.params.id}`)
     order.value = data
@@ -43,10 +44,12 @@ onMounted(async () => {
 })
 
 function goPay() {
+  // ไปหน้าชำระเงินเฉพาะ Order ที่ยัง Pending
   router.push(`/orders/${order.value.order_id}/pay`)
 }
 
 async function cancelOrder() {
+  // ขอ confirm ก่อนยกเลิก เพราะ Backend จะคืน stock ให้ทันที
   const r = await Swal.fire({
     icon: 'warning',
     title: 'ยกเลิกออร์เดอร์นี้?',

@@ -21,6 +21,7 @@ const loading = ref(true)
 const error = ref('')
 
 async function loadProducts() {
+  // โหลดสินค้าตามคำค้นและ Category ที่เลือก โดย Backend กรอง is_active ให้ Customer
   loading.value = true
   error.value = ''
   try {
@@ -41,6 +42,7 @@ async function loadProducts() {
 }
 
 async function loadCategories() {
+  // โหลด Category ที่ไม่ซ้ำมาแสดงเป็นปุ่มกรอง
   try {
     const { data } = await http.get('/products/categories')
     categories.value = data
@@ -62,6 +64,7 @@ onMounted(() => {
 })
 
 function selectProduct(p) {
+  // ส่งสินค้าที่เลือกเข้า Cart Store; ถ้า stock เต็มจะแสดงข้อความแจ้งเตือน
   const ok = cart.add(p)
   Swal.fire({
     toast: true,
