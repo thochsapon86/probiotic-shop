@@ -1,4 +1,5 @@
 <script setup>
+// หน้าชำระเงินสำเร็จ: แสดงข้อมูล Payment และเปิดใบเสร็จ PDF
 import AppNavbar from '../components/AppNavbar.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'

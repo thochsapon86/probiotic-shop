@@ -1,3 +1,4 @@
+// Route ออเดอร์: สร้าง ดูรายการ สรุป และยกเลิกออเดอร์ Pending
 const router = require("express").Router();
 const pool = require("../db");
 const { verifyToken, requireAdmin } = require("../middleware/auth");

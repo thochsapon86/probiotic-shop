@@ -1,3 +1,4 @@
+// Middleware ตรวจ JWT และจำกัดสิทธิ์ของผู้ดูแลระบบ
 const jwt = require('jsonwebtoken')
 
 function verifyToken(req, res, next) {

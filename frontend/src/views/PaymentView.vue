@@ -1,4 +1,5 @@
 <script setup>
+// หน้าชำระเงิน: โหลดออเดอร์ Pending และส่งข้อมูลการชำระไป Backend
 import AppNavbar from '../components/AppNavbar.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

@@ -1,3 +1,4 @@
+// Store ตัวอย่างจาก Vue template เดิม ปัจจุบันไม่ได้ใช้กับ flow ร้านค้า
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 

@@ -1,3 +1,4 @@
+// Route Dashboard สำหรับ Admin ใช้รวมยอดขายและสถิติสินค้า
 const router = require("express").Router();
 const pool = require("../db");
 const { verifyToken, requireAdmin } = require("../middleware/auth");

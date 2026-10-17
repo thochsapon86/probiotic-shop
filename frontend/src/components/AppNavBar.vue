@@ -1,4 +1,5 @@
 <script setup>
+// Navbar กลาง: สร้างเมนูตาม role, แสดงจำนวนสินค้า และจัดการ logout
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'

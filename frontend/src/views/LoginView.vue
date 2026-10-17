@@ -1,4 +1,5 @@
 <script setup>
+// หน้า Login: รับ credential แล้วเก็บ JWT ผ่าน Auth Store
 import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter, RouterLink } from 'vue-router'

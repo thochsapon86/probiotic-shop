@@ -1,4 +1,5 @@
 <script setup>
+// หน้าสรุปออเดอร์: แสดงรายการ ราคา และให้ลูกค้ายกเลิก Pending ได้
 import AppNavbar from '../components/AppNavbar.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'

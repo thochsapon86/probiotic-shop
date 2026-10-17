@@ -1,4 +1,5 @@
 <script setup>
+// หน้าสมัครสมาชิก: ตรวจรูปแบบข้อมูลและ password ก่อนเรียก Register API
 import { ref, computed } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import Swal from 'sweetalert2'

@@ -1,4 +1,5 @@
 <script setup>
+// หน้าแรก: แนะนำร้านและแสดงสินค้าเด่นจาก Public API
 import AppNavbar from '../components/AppNavBar.vue'
 import { imageSrc } from '../utils/imageUrl'
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'

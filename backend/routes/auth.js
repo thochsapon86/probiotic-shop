@@ -1,3 +1,4 @@
+// Route ตัวตนผู้ใช้: Login, Register, ตรวจ token และกู้คืนรหัสผ่าน
 const router = require("express").Router();
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");

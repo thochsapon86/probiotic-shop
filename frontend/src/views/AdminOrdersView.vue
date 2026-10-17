@@ -1,4 +1,5 @@
 <script setup>
+// หน้า Admin สำหรับค้นหาและตรวจสอบออเดอร์ของลูกค้าตามสถานะ
 import AppNavbar from '../components/AppNavBar.vue'
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'

@@ -1,3 +1,4 @@
+// Route ชำระเงิน: ตรวจสิทธิ์ บันทึก Payment และสร้างใบเสร็จ PDF
 const router = require("express").Router();
 const fs = require("fs");
 const PDFDocument = require("pdfkit");

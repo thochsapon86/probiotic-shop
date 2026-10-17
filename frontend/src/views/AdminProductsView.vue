@@ -1,4 +1,5 @@
 <script setup>
+// หน้า Admin จัดการสินค้า: CRUD, อัปโหลดรูป และ Import JSON
 import AppNavbar from '../components/AppNavbar.vue'
 import { imageSrc } from '../utils/imageUrl'
 import { ref, computed, onMounted, watch } from 'vue'

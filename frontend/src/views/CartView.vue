@@ -1,4 +1,5 @@
 <script setup>
+// หน้าตะกร้า: แก้จำนวนสินค้า สร้างออเดอร์ และดูออเดอร์แยกตามสถานะ
 import AppNavbar from '../components/AppNavbar.vue'
 import { imageSrc } from '../utils/imageUrl'
 import { computed, onMounted, ref } from 'vue'

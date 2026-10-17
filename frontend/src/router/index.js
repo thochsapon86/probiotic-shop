@@ -1,3 +1,4 @@
+// รวม route ทุกหน้าและป้องกันหน้าที่ต้อง Login/Admin ด้วย navigation guard
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 

@@ -1,3 +1,4 @@
+// จุดเริ่มต้นของ Express API: โหลด environment, middleware และ route หลัก
 const path = require("path");
 // โหลด .env จากโฟลเดอร์ backend โดยตรง ไม่ขึ้นกับว่าผู้ใช้สั่งรันจาก cwd ไหน
 require("dotenv").config({ path: path.join(__dirname, ".env") });

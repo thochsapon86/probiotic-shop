@@ -1,4 +1,5 @@
 <script setup>
+// หน้าตั้งรหัสผ่านใหม่ โดยใช้ token ที่อยู่ใน query string
 import { ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import http from '../api/http'

@@ -1,3 +1,4 @@
+// Store token, ผู้ใช้ปัจจุบัน และออเดอร์ Pending ที่กลับมาชำระต่อได้
 import { defineStore } from 'pinia'
 import http from '../api/http'
 import { useCartStore } from './cart'

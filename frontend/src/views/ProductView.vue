@@ -1,4 +1,5 @@
 <script setup>
+// หน้าสินค้าลูกค้า: ค้นหา กรอง Category และเพิ่มสินค้าลง Cart Store
 import AppNavbar from '../components/AppNavbar.vue'
 import { imageSrc } from '../utils/imageUrl'
 import { ref, onMounted, watch } from 'vue'

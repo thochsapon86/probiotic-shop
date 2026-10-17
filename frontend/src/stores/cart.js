@@ -1,3 +1,4 @@
+// Store ตะกร้า: เพิ่ม/แก้จำนวน/ลบสินค้า และเก็บข้อมูลผ่าน LocalStorage
 import { defineStore } from 'pinia'
 
 const KEY = 'cart'

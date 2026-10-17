@@ -1,4 +1,5 @@
 <script setup>
+// หน้าขอ Reset Password โดยส่งอีเมลให้ Backend
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import http from '../api/http'

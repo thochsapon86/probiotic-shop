@@ -1,4 +1,5 @@
 <script setup>
+// หน้ารายการออเดอร์เดิม ปัจจุบัน route จะ redirect ไป Cart ที่รวมฟังก์ชันนี้แล้ว
 import AppNavbar from '../components/AppNavBar.vue'
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'

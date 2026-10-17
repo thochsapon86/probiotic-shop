@@ -1,4 +1,5 @@
 <script setup>
+// หน้า Dashboard Admin: เรียกยอดขายและวาดกราฟด้วย Chart.js
 import AppNavbar from '../components/AppNavBar.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'

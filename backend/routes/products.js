@@ -1,3 +1,4 @@
+// Route สินค้า: อ่านข้อมูล, CRUD สำหรับ Admin และ Import JSON
 const router = require("express").Router();
 const multer = require("multer");
 const path = require("path");

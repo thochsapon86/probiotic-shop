@@ -1,3 +1,4 @@
+// สร้าง MySQL connection pool กลางให้ route ทุกตัวใช้งานร่วมกัน
 require("dotenv").config();
 const mysql = require("mysql2/promise");
 

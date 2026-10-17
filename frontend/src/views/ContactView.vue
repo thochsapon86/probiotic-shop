@@ -1,4 +1,5 @@
 <script setup>
+// หน้าแสดงข้อมูลการติดต่อของร้าน
 import AppNavbar from '../components/AppNavbar.vue'
 
 
