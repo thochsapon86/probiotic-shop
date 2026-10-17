@@ -180,12 +180,29 @@ router.post("/register", registerLimiter, registerRules, async (req, res) => {
     }
 
     const password_hash = await bcrypt.hash(password, 10);
-    await pool.query(
+    const [created] = await pool.query(
       `INSERT INTO users (username, email, password_hash, role, full_name, phone, address)
        VALUES (?, ?, ?, 'customer', ?, ?, ?)`,
       [username, email, password_hash, full_name, phone || null, address || null]
     );
-    res.status(201).json({ message: "สมัครสมาชิกสำเร็จ" });
+
+    // ออก JWT ให้ทันทีเพื่อให้ Register API นำไปทดสอบ endpoint ที่ต้อง login ต่อใน Postman/Thunder Client ได้
+    const token = jwt.sign(
+      { user_id: created.insertId, username, role: "customer" },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+    res.status(201).json({
+      message: "สมัครสมาชิกสำเร็จ",
+      token,
+      user: {
+        user_id: created.insertId,
+        username,
+        email,
+        role: "customer",
+        full_name,
+      },
+    });
   } catch (err) {
     if (err.code === "ER_DUP_ENTRY")
       return res.status(409).json({ message: "Username หรืออีเมลนี้ถูกใช้งานแล้ว" });
