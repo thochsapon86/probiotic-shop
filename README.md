@@ -155,45 +155,64 @@ Authorization: Bearer YOUR_TOKEN
 
 ```mermaid
 erDiagram
-  USERS ||--o{ ORDERS : places
-  ORDERS ||--|{ ORDER_DETAILS : contains
-  PRODUCTS ||--o{ ORDER_DETAILS : included_in
-  ORDERS ||--o{ PAYMENTS : has
+    USERS {
+        int user_id PK
+        varchar username
+        varchar email
+        varchar password_hash
+        enum role
+        varchar full_name
+        varchar phone
+        text address
+        char reset_token
+        datetime reset_token_expires
+        timestamp created_at
+    }
 
-  USERS {
-    int user_id PK
-    varchar username UK
-    varchar email UK
-    enum role
-    varchar full_name
-  }
-  PRODUCTS {
-    int product_id PK
-    varchar name
-    varchar category
-    decimal price
-    int stock
-  }
-  ORDERS {
-    int order_id PK
-    int user_id FK
-    decimal total_amount
-    enum status
-  }
-  ORDER_DETAILS {
-    int order_detail_id PK
-    int order_id FK
-    int product_id FK
-    int quantity
-    decimal price_at_order
-  }
-  PAYMENTS {
-    int payment_id PK
-    int order_id FK
-    decimal amount
-    enum payment_status
-    varchar transaction_ref UK
-  }
+    ORDERS {
+        int order_id PK
+        int user_id FK
+        datetime order_date
+        decimal total_amount
+        enum status
+        timestamp created_at
+    }
+
+    ORDER_DETAILS {
+        int order_detail_id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal price_at_order
+    }
+
+    PRODUCTS {
+        int product_id PK
+        varchar name
+        text description
+        varchar category
+        decimal price
+        int stock
+        varchar image_url
+        tinyint is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PAYMENTS {
+        int payment_id PK
+        int order_id FK
+        decimal amount
+        enum payment_method
+        enum payment_status
+        varchar transaction_ref
+        datetime payment_date
+    }
+
+    USERS ||--o{ ORDERS : "places"
+    ORDERS ||--|{ ORDER_DETAILS : "contains"
+    PRODUCTS ||--o{ ORDER_DETAILS : "ordered_in"
+    ORDERS ||--o| PAYMENTS : "paid_by"
 ```
 
 ## ขั้นตอนทดสอบหน้าเว็บ
