@@ -1,4 +1,5 @@
 <script setup>
+// หน้าแรก: แนะนำร้านและแสดงสินค้าเด่นจาก Public API
 import AppNavbar from '../components/AppNavBar.vue'
 import { imageSrc } from '../utils/imageUrl'
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
@@ -23,11 +24,13 @@ const offset = computed(() =>
 )
 
 function updatePerView() {
+  // ปรับจำนวน card ที่แสดงตามขนาดหน้าจอ เพื่อให้ Carousel responsive
   const w = window.innerWidth
   perView.value = w >= 1024 ? 3 : w >= 640 ? 2 : 1
   if (page.value >= pageCount.value) page.value = 0
 }
 function goTo(i) {
+  // ทำให้ index วนอยู่ในช่วงหน้าที่มีอยู่
   const n = pageCount.value
   page.value = ((i % n) + n) % n
 }
@@ -37,6 +40,7 @@ const prev = () => goTo(page.value - 1)
 // เลื่อนอัตโนมัติทุก 4 วินาที หยุดเมื่อเอาเมาส์วาง/โฟกัส และไม่เลื่อนถ้าผู้ใช้ตั้งค่าลดการเคลื่อนไหว
 let timer
 function startAuto() {
+  // เริ่มเลื่อน Carousel อัตโนมัติทุก 4 วินาทีถ้าผู้ใช้ไม่ได้ลด motion
   stopAuto()
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
   timer = setInterval(() => {
@@ -44,6 +48,7 @@ function startAuto() {
   }, 4000)
 }
 function stopAuto() {
+  // หยุด timer เพื่อไม่ให้มี interval ค้างหลังออกจากหน้า
   clearInterval(timer)
 }
 
@@ -51,6 +56,7 @@ function stopAuto() {
 let touchX = 0
 const onTouchStart = (e) => (touchX = e.touches[0].clientX)
 function onTouchEnd(e) {
+  // ตรวจระยะ swipe บนมือถือแล้วเปลี่ยนหน้า Carousel ตามทิศทาง
   const dx = e.changedTouches[0].clientX - touchX
   if (Math.abs(dx) > 50) dx < 0 ? next() : prev()
 }
@@ -58,6 +64,7 @@ function onTouchEnd(e) {
 const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2 })
 
 onMounted(async () => {
+  // โหลดสินค้าเด่นครั้งแรกและผูก event สำหรับ responsive/auto carousel
   updatePerView()
   window.addEventListener('resize', updatePerView)
   try {

@@ -1,4 +1,5 @@
 <script setup>
+// หน้าขอ Reset Password โดยส่งอีเมลให้ Backend
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import http from '../api/http'
@@ -7,8 +8,10 @@ const email = ref('')
 const loading = ref(false)
 const message = ref('')
 const error = ref('')
+// Backend ใช้ข้อความตอบกลับกลาง จึงไม่เปิดเผยว่า email นี้มีบัญชีหรือไม่
 
 async function submit() {
+  // ส่ง email ไปขอลิงก์ reset; Backend จะตอบข้อความกลางเพื่อป้องกัน account enumeration
   error.value = ''
   message.value = ''
   loading.value = true
@@ -24,6 +27,7 @@ async function submit() {
 </script>
 
 <template>
+  <!-- ผู้ใช้กรอก email เพื่อขอลิงก์ตั้งรหัสผ่านใหม่ -->
   <div class="min-h-screen flex items-center justify-center bg-green-50 p-4">
     <form @submit.prevent="submit" class="w-full max-w-sm bg-white rounded-2xl shadow p-8 space-y-4">
       <h1 class="text-2xl font-bold text-green-700 text-center">ลืมรหัสผ่าน</h1>

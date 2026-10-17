@@ -1,3 +1,4 @@
+// รวม route ทุกหน้าและป้องกันหน้าที่ต้อง Login/Admin ด้วย navigation guard
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -27,6 +28,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
+  // Guard นี้ทำงานก่อนเปลี่ยนหน้า: ตรวจ Login, Admin และห้ามผู้ Login แล้วกลับหน้า Guest
   const auth = useAuthStore()
   if (to.meta.requiresAuth && !auth.isLoggedIn) return { name: 'login' }
   if (to.meta.requiresAdmin && !auth.isAdmin) return { path: '/' }

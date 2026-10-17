@@ -1,4 +1,5 @@
 <script setup>
+// หน้า Login: รับ credential แล้วเก็บ JWT ผ่าน Auth Store
 import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter, RouterLink } from 'vue-router'
@@ -7,6 +8,7 @@ import { useRouter, RouterLink } from 'vue-router'
 const router = useRouter()
 const auth = useAuthStore()
 
+// username/password คือค่าที่ผู้ใช้กรอก ส่วน loading/error ใช้ควบคุม feedback ระหว่าง request
 const username = ref('')
 const password = ref('')
 const showPassword = ref(false)
@@ -14,6 +16,7 @@ const loading = ref(false)
 const error = ref('')
 
 async function onSubmit() {
+  // ส่ง username/password เข้า Auth Store; สำเร็จแล้ว Store จะเก็บ JWT และ redirect ตาม role
   error.value = ''
   if (!username.value.trim() || !password.value) {
     error.value = 'กรุณากรอก Username และ Password'
@@ -32,6 +35,7 @@ async function onSubmit() {
 </script>
 
 <template>
+  <!-- หน้า Login เป็น Guest-only ตาม router guard -->
   <div class="min-h-screen flex items-center justify-center bg-green-50 p-4">
     <form @submit.prevent="onSubmit" class="w-full max-w-sm bg-white rounded-2xl shadow p-8 space-y-4">
       <h1 class="text-2xl font-bold text-green-700 text-center">Probiotic Shop</h1>

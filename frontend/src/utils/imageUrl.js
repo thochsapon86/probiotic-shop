@@ -1,6 +1,7 @@
 // แปลง path รูปจากฐานข้อมูลให้เป็น URL ที่เบราว์เซอร์โหลดได้
 // - '/uploads/products/xxx.jpg' (รูปที่อัปโหลด) -> http://localhost:3000/uploads/products/xxx.jpg
 // - 'https://...' (ลิงก์ภายนอกที่มีมาก่อน) -> ใช้ตามเดิม
+// แปลง path รูปจากฐานข้อมูลให้เป็น URL เต็มของ Backend
 const API_ORIGIN = new URL(import.meta.env.VITE_API_URL, window.location.origin).origin
 
 export function imageSrc(url) {

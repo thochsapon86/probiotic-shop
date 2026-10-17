@@ -1,4 +1,5 @@
 <script setup>
+// Navbar กลาง: สร้างเมนูตาม role, แสดงจำนวนสินค้า และจัดการ logout
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
@@ -20,6 +21,7 @@ const showCart = computed(() => auth.isLoggedIn && !auth.isAdmin)
 const cartBadge = computed(() => (cart.count > 99 ? '99+' : cart.count))
 
 const links = computed(() => {
+  // สร้างเมนูตามสถานะ Login และ role เพื่อไม่ให้ Customer เห็นเมนู Admin
   const l = [{ to: '/', label: 'หน้าแรก' }]
   if (auth.isLoggedIn) {
     l.push({ to: '/products', label: 'สินค้า' })
@@ -42,6 +44,7 @@ const linkClass = (to) =>
     : 'text-[#3E5A52] hover:bg-[#F6F9F4]'
 
 function logout() {
+  // ปิดเมนู ล้าง store และพาผู้ใช้กลับหน้า Login
   userOpen.value = false
   menuOpen.value = false
   auth.logout()
@@ -54,6 +57,7 @@ watch(() => route.fullPath, () => {
   userOpen.value = false
 })
 function onDocClick(e) {
+  // คลิกนอก user menu จะปิด dropdown บน Desktop
   if (userMenuRef.value && !userMenuRef.value.contains(e.target)) userOpen.value = false
 }
 function onKey(e) {

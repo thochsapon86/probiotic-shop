@@ -1,4 +1,5 @@
 <script setup>
+// หน้าสมัครสมาชิก: ตรวจรูปแบบข้อมูลและ password ก่อนเรียก Register API
 import { ref, computed } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import Swal from 'sweetalert2'
@@ -6,6 +7,7 @@ import http from '../api/http'
 
 const router = useRouter()
 
+// form เก็บข้อมูลสมัครสมาชิก; confirmPassword ใช้ตรวจหน้าเว็บและไม่ส่งไป Backend
 const form = ref({
   username: '',
   email: '',
@@ -21,6 +23,7 @@ const error = ref('')
 
 // เงื่อนไข password (แสดงแบบ checklist สดๆ)
 const rules = computed(() => [
+  // คำนวณ checklist password แบบ reactive เพื่อให้ผู้ใช้เห็นเงื่อนไขผ่านทันที
   { label: 'อย่างน้อย 8 ตัวอักษร', ok: form.value.password.length >= 8 },
   { label: 'ตัวพิมพ์เล็ก (a-z)', ok: /[a-z]/.test(form.value.password) },
   { label: 'ตัวพิมพ์ใหญ่ (A-Z)', ok: /[A-Z]/.test(form.value.password) },
@@ -33,6 +36,7 @@ const passwordMatch = computed(
 )
 
 async function onSubmit() {
+  // trim ข้อมูล ตรวจเงื่อนไขฝั่ง Client แล้วส่งข้อมูลสมัครสมาชิกไป Backend
   error.value = ''
   const f = form.value
 
@@ -86,6 +90,7 @@ async function onSubmit() {
 </script>
 
 <template>
+  <!-- ฟอร์มสมัครสมาชิกตรวจซ้ำทั้งฝั่ง Client และ Backend -->
   <div class="min-h-screen flex items-center justify-center bg-green-50 p-4">
     <form @submit.prevent="onSubmit" class="w-full max-w-md bg-white rounded-2xl shadow p-8 space-y-4">
       <h1 class="text-2xl font-bold text-green-700 text-center">Probiotic Shop</h1>

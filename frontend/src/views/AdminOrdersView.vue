@@ -1,4 +1,5 @@
 <script setup>
+// หน้า Admin สำหรับค้นหาและตรวจสอบออเดอร์ของลูกค้าตามสถานะ
 import AppNavbar from '../components/AppNavBar.vue'
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
@@ -7,6 +8,7 @@ import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+// orders คือผลลัพธ์จาก API; search/status เป็นค่าที่ผูกกับ input และ select ของ Admin
 const orders = ref([])
 const search = ref('')
 const status = ref('')
@@ -23,6 +25,7 @@ const statusClass = {
 }
 
 async function loadOrders() {
+  // Admin API รองรับค้นหาเลข Order/username และกรอง status จาก query string
   loading.value = true
   error.value = ''
   try {
@@ -50,9 +53,11 @@ onMounted(loadOrders)
 </script>
 
 <template>
+  <!-- หน้านี้ให้เฉพาะ Admin ตรวจสอบ Order ของลูกค้าทั้งระบบ -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
     <main class="max-w-6xl mx-auto px-5 py-8">
+      <!-- เมื่อ search หรือ status เปลี่ยน watch จะเรียก API และวาดผลลัพธ์ใหม่ -->
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p class="text-sm text-[#3E5A52]">สำหรับผู้ดูแลระบบ</p>

@@ -1,4 +1,5 @@
 <script setup>
+// หน้า Admin จัดการสินค้า: CRUD, อัปโหลดรูป และ Import JSON
 import AppNavbar from '../components/AppNavbar.vue'
 import { imageSrc } from '../utils/imageUrl'
 import { ref, computed, onMounted, watch } from 'vue'
@@ -10,6 +11,7 @@ const products = ref([])
 const search = ref('')
 const loading = ref(false)
 
+// showModal/editingId ใช้แยกโหมดเพิ่มกับแก้ไขใน modal เดียวกัน
 const showModal = ref(false)
 const editingId = ref(null)
 const saving = ref(false)
@@ -37,6 +39,7 @@ const shownImage = computed(() =>
 )
 
 function resetImage(current) {
+  // คืนค่า state รูปภาพเมื่อเปิด Add/Edit และคืน object URL ที่ Browser สร้างไว้
   if (imagePreview.value) URL.revokeObjectURL(imagePreview.value)
   imageFile.value = null
   imagePreview.value = ''
@@ -45,6 +48,7 @@ function resetImage(current) {
 }
 
 function onFileChange(e) {
+  // ตรวจชนิดและขนาดรูปเบื้องต้นก่อนเตรียม preview; Backend จะตรวจ signature ซ้ำ
   const file = e.target.files[0]
   formError.value = ''
   if (!file) return resetImage(currentImage.value)
@@ -65,6 +69,7 @@ function onFileChange(e) {
 }
 
 function buildFormData(f) {
+  // FormData จำเป็นเพราะ request อาจมีทั้ง field และไฟล์รูป
   const fd = new FormData()
   fd.append('name', f.name.trim())
   fd.append('description', f.description || '')
@@ -77,6 +82,7 @@ function buildFormData(f) {
 }
 
 async function loadProducts() {
+  // โหลดรายการสินค้าใหม่หลังค้นหา เพิ่ม แก้ไข ลบ หรือ Import สำเร็จ
   loading.value = true
   try {
     const { data } = await http.get('/products', { params: { search: search.value } })
@@ -98,6 +104,7 @@ watch(search, () => {
 onMounted(loadProducts)
 
 function openAdd() {
+  // เปิด modal ในโหมดเพิ่มสินค้าและล้างค่าเดิมทั้งหมด
   editingId.value = null
   form.value = emptyForm()
   resetImage('')
@@ -106,6 +113,7 @@ function openAdd() {
 }
 
 function openEdit(p) {
+  // เติมข้อมูลสินค้าเดิมลง form เพื่อให้ผู้ใช้แก้เฉพาะ field ที่ต้องการ
   editingId.value = p.product_id
   form.value = {
     name: p.name,
@@ -120,6 +128,7 @@ function openEdit(p) {
 }
 
 async function save() {
+  // ตรวจข้อมูลฝั่งหน้าเว็บก่อน แล้วเลือก POST หรือ PUT ตาม editingId
   formError.value = ''
   const f = form.value
   if (!f.name.trim()) return (formError.value = 'กรุณากรอกชื่อสินค้า')
@@ -144,6 +153,7 @@ async function save() {
 
 // ส่งไฟล์ JSON ให้ backend ตรวจสอบและเพิ่มสินค้าทั้งชุดด้วย transaction
 async function importJson(event) {
+  // ส่งไฟล์ JSON ไป endpoint Admin; Backend จะ validate ทั้งชุดและใช้ transaction
   const file = event.target.files?.[0]
   event.target.value = ''
   if (!file) return
@@ -166,6 +176,7 @@ async function importJson(event) {
 }
 
 async function remove(p) {
+  // ขอคำยืนยันก่อนลบ และแสดงข้อความจาก Backend หากติด foreign key ของ Order
   const r = await Swal.fire({
     icon: 'warning',
     title: `ลบ "${p.name}" ?`,
@@ -190,11 +201,13 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
 </script>
 
 <template>
+  <!-- Admin จัดการข้อมูลสินค้าและรูปภาพจากหน้านี้ -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 
     <main class="max-w-6xl mx-auto px-5 py-8">
       <h1 class="text-3xl font-bold mb-6">จัดการสินค้า</h1>
+      <!-- search ใช้ debounce เพื่อลดจำนวน request ขณะพิมพ์ -->
       <div class="flex flex-wrap items-center gap-3 justify-between">
         <input v-model="search" type="search" placeholder="ค้นหาชื่อ รายละเอียด หรือรหัสสินค้า"
           class="w-full sm:w-80 border rounded-full px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-400" />
@@ -210,6 +223,7 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
         </div>
       </div>
 
+      <!-- ตารางแสดงข้อมูลล่าสุดจาก products API -->
       <div class="mt-6 bg-white rounded-2xl overflow-x-auto">
         <table class="w-full text-sm min-w-[640px]">
           <thead class="text-left bg-[#E3F0E6]">
@@ -256,6 +270,7 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
     </main>
 
     <!-- Modal เพิ่ม/แก้ไข -->
+    <!-- modal นี้ใช้ทั้งเพิ่มและแก้ไข โดย v-model ผูกค่ากับ form -->
     <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
       @click.self="showModal = false">
       <form @submit.prevent="save" class="bg-white rounded-2xl w-full max-w-md p-6 space-y-3">

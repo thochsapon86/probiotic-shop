@@ -1,4 +1,5 @@
 <script setup>
+// หน้าชำระเงินสำเร็จ: แสดงข้อมูล Payment และเปิดใบเสร็จ PDF
 import AppNavbar from '../components/AppNavbar.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
@@ -9,6 +10,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+// payment ใช้แสดงผลลัพธ์จาก API ส่วน receiptLoading คุมปุ่มสร้าง/เปิด PDF
 const payment = ref(null)
 const loading = ref(true)
 const error = ref('')
@@ -19,6 +21,7 @@ const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2
 const fmtDate = (d) => new Date(d).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })
 
 onMounted(async () => {
+  // โหลดข้อมูล Payment สำเร็จและล้าง pendingOrderId เพื่อซ่อนปุ่มชำระต่อ
   try {
     const { data } = await http.get(`/payments/order/${route.params.id}`)
     payment.value = data
@@ -37,6 +40,7 @@ onMounted(async () => {
 })
 
 async function openReceipt() {
+  // ขอ PDF แบบ blob แล้วสร้าง temporary URL ให้ Browser เปิดใน tab ใหม่
   receiptLoading.value = true
   try {
     const { data } = await http.get(`/payments/order/${route.params.id}/receipt`, { responseType: 'blob' })
@@ -52,6 +56,7 @@ async function openReceipt() {
 </script>
 
 <template>
+  <!-- แสดงผลหลัง Payment สำเร็จและให้ดาวน์โหลดใบเสร็จได้ -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 

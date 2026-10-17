@@ -1,4 +1,5 @@
 <script setup>
+// หน้าชำระเงิน: โหลดออเดอร์ Pending และส่งข้อมูลการชำระไป Backend
 import AppNavbar from '../components/AppNavbar.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -9,6 +10,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+// order คือออเดอร์ที่กำลังชำระ ส่วน method/reference คือข้อมูลจากฟอร์มลูกค้า
 const order = ref(null)
 const loading = ref(true)
 const error = ref('')
@@ -34,6 +36,7 @@ const methods = {
 const baht = (n) => Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2 })
 
 onMounted(async () => {
+  // โหลด Order ตาม URL และไม่อนุญาตให้เปิดชำระซ้ำถ้าจ่ายแล้วหรือถูกยกเลิก
   try {
     const { data } = await http.get(`/orders/${route.params.id}`)
     if (data.status === 'paid') {
@@ -54,6 +57,7 @@ onMounted(async () => {
 })
 
 async function submit() {
+  // ตรวจข้อมูล payment แล้วส่งให้ Backend; จำนวนเงินไม่ได้ส่งจากหน้าเว็บเพราะ Backend อ่านจาก Order
   formError.value = ''
   const ref_ = reference.value.trim()
   if (!/^[A-Za-z0-9-]{6,30}$/.test(ref_)) {
@@ -82,6 +86,7 @@ async function submit() {
 </script>
 
 <template>
+  <!-- หน้านี้เปิดได้เฉพาะ Order ที่ยังมีสถานะ pending -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 

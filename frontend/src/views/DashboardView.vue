@@ -1,4 +1,5 @@
 <script setup>
+// หน้า Dashboard Admin: เรียกยอดขายและวาดกราฟด้วย Chart.js
 import AppNavbar from '../components/AppNavBar.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -19,6 +20,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const auth = useAuthStore()
 const router = useRouter()
+// summary ใช้กับการ์ดตัวเลข ส่วน dailySales/productSales ใช้สร้างกราฟสองชุด
 const loading = ref(true)
 const error = ref('')
 const from = ref('')
@@ -42,6 +44,7 @@ function setDefaultRange() {
 const baht = (value) => Number(value || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })
 const shortDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
 const chartData = computed(() => ({
+  // แปลง daily_sales จาก API เป็น dataset ที่ vue-chartjs ต้องการ
   labels: dailySales.value.map((item) => shortDate(item.date)),
   datasets: [{
     label: 'ยอดขาย (บาท)',
@@ -68,6 +71,7 @@ const chartOptions = {
   },
 }
 const productChartData = computed(() => ({
+  // แปลง product_sales เป็นกราฟยอดขายแยกสินค้า
   labels: productSales.value.map((item) => item.product_name),
   datasets: [{
     label: 'ยอดขายสินค้า (บาท)',
@@ -96,6 +100,7 @@ const productChartOptions = {
 }
 
 async function loadDashboard() {
+  // เรียก Dashboard API ตามช่วงวันที่ และเก็บ summary/chart data ใน reactive state
   error.value = ''
   loading.value = true
   try {
@@ -116,6 +121,7 @@ async function loadDashboard() {
 }
 
 function search() {
+  // ปุ่มค้นหาจะเรียก API ใหม่เมื่อผู้ดูแลเปลี่ยนช่วงวันที่
   if (!from.value || !to.value || from.value > to.value) {
     error.value = 'กรุณาเลือกช่วงวันที่ให้ถูกต้อง'
     return
@@ -130,6 +136,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- Dashboard เป็นหน้าสำหรับ Admin เท่านั้นตาม route meta -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 
@@ -139,7 +146,8 @@ onMounted(() => {
           <p class="text-sm text-[#3E5A52]">สำหรับผู้ดูแลระบบ</p>
           <h1 class="text-3xl font-bold">Dashboard ยอดขาย</h1>
         </div>
-        <form class="flex flex-wrap items-end gap-2" @submit.prevent="search">
+      <!-- ผู้ใช้เลือกช่วงวัน แล้ว submit เพื่อเรียก Dashboard API ใหม่ -->
+      <form class="flex flex-wrap items-end gap-2" @submit.prevent="search">
           <label class="text-sm">ตั้งแต่<input v-model="from" type="date" class="block mt-1 border rounded-lg px-3 py-2 bg-white" /></label>
           <label class="text-sm">ถึง<input v-model="to" type="date" class="block mt-1 border rounded-lg px-3 py-2 bg-white" /></label>
           <button class="bg-[#14532D] text-white rounded-full px-5 py-2.5">ดูรายงาน</button>

@@ -1,9 +1,11 @@
 <script setup>
+// หน้าตั้งรหัสผ่านใหม่ โดยใช้ token ที่อยู่ใน query string
 import { ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import http from '../api/http'
 
 const route = useRoute()
+// token อยู่ใน query string จากลิงก์อีเมล ส่วน password ใหม่จะถูกตรวจซ้ำโดย Backend
 const password = ref('')
 const confirmPassword = ref('')
 const loading = ref(false)
@@ -11,6 +13,7 @@ const error = ref('')
 const success = ref(false)
 
 async function submit() {
+  // ส่ง token จาก URL พร้อม password ใหม่ให้ Backend ตรวจ token และ policy อีกครั้ง
   error.value = ''
   if (password.value !== confirmPassword.value) {
     error.value = 'รหัสผ่านไม่ตรงกัน'
@@ -29,6 +32,7 @@ async function submit() {
 </script>
 
 <template>
+  <!-- หน้า Reset ใช้ได้เมื่อมี token จาก Forgot Password -->
   <div class="min-h-screen flex items-center justify-center bg-green-50 p-4">
     <form v-if="!success" @submit.prevent="submit" class="w-full max-w-sm bg-white rounded-2xl shadow p-8 space-y-4">
       <h1 class="text-2xl font-bold text-green-700 text-center">ตั้งรหัสผ่านใหม่</h1>

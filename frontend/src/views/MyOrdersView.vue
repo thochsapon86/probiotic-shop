@@ -1,4 +1,5 @@
 <script setup>
+// หน้ารายการออเดอร์เดิม ปัจจุบัน route จะ redirect ไป Cart ที่รวมฟังก์ชันนี้แล้ว
 import AppNavbar from '../components/AppNavBar.vue'
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
@@ -7,6 +8,7 @@ import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+// หน้านี้เป็น implementation เดิมของรายการ Order; route หลักปัจจุบันรวมไว้ใน Cart แล้ว
 const orders = ref([])
 const status = ref('')
 const loading = ref(true)
@@ -22,6 +24,7 @@ const statusClass = {
 }
 
 async function loadOrders() {
+  // หน้านี้เป็น implementation เดิมของรายการ Order ปัจจุบัน route หลักใช้ Cart แทน
   loading.value = true
   error.value = ''
   try {

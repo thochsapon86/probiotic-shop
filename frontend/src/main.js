@@ -1,3 +1,4 @@
+// จุดเริ่มต้น Vue: ติดตั้ง Pinia และ Router ก่อน mount แอป
 import './assets/main.css'
 
 import { createApp } from 'vue'

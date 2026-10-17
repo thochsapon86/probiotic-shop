@@ -1,4 +1,5 @@
 <script setup>
+// หน้าสรุปออเดอร์: แสดงรายการ ราคา และให้ลูกค้ายกเลิก Pending ได้
 import AppNavbar from '../components/AppNavbar.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
@@ -10,6 +11,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+// order จะเป็น null ระหว่างโหลด และถูกเติมด้วยข้อมูลจาก /orders/:id
 const order = ref(null)
 const loading = ref(true)
 const error = ref('')
@@ -26,6 +28,7 @@ const fmtDate = (d) =>
   new Date(d).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })
 
 onMounted(async () => {
+  // โหลดข้อมูล Order ตาม id และให้ Backend เป็นผู้ตรวจว่าเป็นเจ้าของหรือ Admin
   try {
     const { data } = await http.get(`/orders/${route.params.id}`)
     order.value = data
@@ -42,10 +45,12 @@ onMounted(async () => {
 })
 
 function goPay() {
+  // ไปหน้าชำระเงินเฉพาะ Order ที่ยัง Pending
   router.push(`/orders/${order.value.order_id}/pay`)
 }
 
 async function cancelOrder() {
+  // ขอ confirm ก่อนยกเลิก เพราะ Backend จะคืน stock ให้ทันที
   const r = await Swal.fire({
     icon: 'warning',
     title: 'ยกเลิกออร์เดอร์นี้?',
@@ -66,6 +71,7 @@ async function cancelOrder() {
 </script>
 
 <template>
+  <!-- แสดงรายละเอียดออเดอร์ก่อนเข้าสู่ขั้นตอน Payment -->
   <div class="min-h-screen bg-[#F6F9F4] text-[#17302A]">
     <AppNavbar />
 
