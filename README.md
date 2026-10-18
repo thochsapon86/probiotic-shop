@@ -1,5 +1,97 @@
 # Probiotic Shop
 
+## การตั้งค่าไฟล์ `.env` (ต้องทำแยก Backend และ Frontend)
+
+ในโปรเจกต์นี้มี environment 2 ส่วน และต้องสร้างไฟล์ `.env` ในแต่ละโฟลเดอร์แยกกัน:
+
+```text
+probiotic-shop/
+├─ backend/
+│  ├─ .env.example   # ตัวอย่างค่าของ Express/MySQL/SMTP
+│  └─ .env           # ไฟล์ใช้งานจริง ห้าม commit ขึ้น GitHub
+└─ frontend/
+   ├─ .env.example   # ตัวอย่าง URL ของ Backend
+   └─ .env            # ไฟล์ใช้งานจริง ห้าม commit ขึ้น GitHub
+```
+
+### 1. Backend `.env`
+
+เปิด PowerShell จากโฟลเดอร์โปรเจกต์ แล้วรัน:
+
+```powershell
+Copy-Item backend/.env.example backend/.env
+```
+
+จากนั้นแก้ไขไฟล์ `backend/.env`:
+
+```env
+PORT=3000
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=รหัสผ่าน MySQL ของเครื่องนี้
+DB_NAME=probiotic_shop
+
+# ใช้สร้างและตรวจสอบ JWT ควรเป็น string ยาวและสุ่ม ห้ามใช้ค่า example ใน Production
+JWT_SECRET=ใส่ค่าสุ่มยาวอย่างน้อย 32 ตัวอักษร
+JWT_EXPIRES_IN=1h
+
+# Origin ของ Vue ที่อนุญาตให้เรียก API
+CLIENT_URL=http://localhost:5173
+
+# จำนวนครั้งที่ขอ Forgot Password ได้ต่อชั่วโมงในโหมดทดสอบ
+FORGOT_PASSWORD_MAX=20
+```
+
+ความหมายของค่าหลัก:
+
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: ข้อมูลเชื่อมต่อ MySQL
+- `JWT_SECRET`: กุญแจลับสำหรับเซ็น JWT ห้ามเปิดเผยหรือ push ขึ้น GitHub
+- `JWT_EXPIRES_IN`: อายุ Token เช่น `1h`, `7d`
+- `CLIENT_URL`: URL Frontend ที่ Backend จะอนุญาตผ่าน CORS
+- `FORGOT_PASSWORD_MAX`: จำนวนครั้งสูงสุดของ Forgot Password ต่อ IP ต่อชั่วโมง
+
+ถ้าต้องการใช้ Forgot Password ผ่าน Gmail ให้เพิ่มค่าต่อไปนี้ใน `backend/.env`:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=อีเมล Gmail ของร้าน
+SMTP_PASSWORD=Gmail App Password 16 หลัก
+MAIL_FROM=อีเมลผู้ส่ง
+```
+
+ควรใช้ Gmail App Password แทนรหัสผ่าน Gmail จริง และห้ามส่งค่าเหล่านี้ให้ผู้อื่นหรือ commit ลง Git
+
+### 2. Frontend `.env`
+
+สร้างไฟล์จากตัวอย่าง:
+
+```powershell
+Copy-Item frontend/.env.example frontend/.env
+```
+
+ไฟล์ `frontend/.env` ใช้เพียงค่าเดียว:
+
+```env
+VITE_API_URL=http://localhost:3000/api
+```
+
+`VITE_API_URL` ต้องลงท้ายด้วย `/api` เพราะ Axios ใช้ค่านี้เป็น `baseURL` เช่น:
+
+- `GET /products` จะเรียก `http://localhost:3000/api/products`
+- `POST /auth/login` จะเรียก `http://localhost:3000/api/auth/login`
+
+หลังแก้ `.env` ต้อง restart Vite และ Backend เพราะ environment จะถูกอ่านตอนเริ่ม process เท่านั้น
+
+### 3. สิ่งที่ห้ามทำ
+
+- ห้ามเปลี่ยนชื่อไฟล์เป็น `.env.example.env`
+- ห้ามใส่ `VITE_` ในค่าลับ เช่น password หรือ JWT secret เพราะค่าที่ขึ้นต้นด้วย `VITE_` จะถูกส่งไปฝั่ง Browser
+- ห้าม commit ไฟล์ `backend/.env` และ `frontend/.env`
+- ถ้าเผลอ push SMTP password หรือ JWT secret ให้เปลี่ยนค่าใหม่ทันที
+
 เว็บร้านขายสินค้า Probiotic พัฒนาด้วย Vue.js, Express.js และ MySQL
 
 ## ความสามารถของระบบ
