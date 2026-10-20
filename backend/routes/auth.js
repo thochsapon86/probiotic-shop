@@ -81,7 +81,8 @@ const forgotPasswordLimiter = rateLimit({
 });
 
 // ไม่เปิดเผยว่า email มีบัญชีอยู่หรือไม่ เพื่อป้องกันการไล่ตรวจรายชื่อผู้ใช้
-router.post("/forgot-password", forgotPasswordLimiter, [body("email").trim().isEmail().normalizeEmail()], async (req, res) => {
+// ใช้ lowercase อย่างเดียว เพราะ normalizeEmail อาจลบจุดใน Gmail เช่น test.user@gmail.com
+router.post("/forgot-password", forgotPasswordLimiter, [body("email").trim().isEmail().toLowerCase()], async (req, res) => {
   // ใช้ข้อความตอบกลับกลางเพื่อไม่เปิดเผยว่า email ใดมีบัญชีอยู่ในระบบ
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ message: "รูปแบบอีเมลไม่ถูกต้อง" });
@@ -155,7 +156,8 @@ const registerRules = [
     .trim()
     .matches(/^[A-Za-z0-9_]{4,20}$/)
     .withMessage("Username ต้องเป็น a-z, 0-9, _ ความยาว 4-20 ตัว"),
-  body("email").trim().isEmail().withMessage("รูปแบบอีเมลไม่ถูกต้อง").normalizeEmail(),
+  // เก็บจุดในอีเมลไว้ตามที่ผู้ใช้กรอก และลดตัวพิมพ์ใหญ่เพื่อค้นหาได้สม่ำเสมอ
+  body("email").trim().isEmail().withMessage("รูปแบบอีเมลไม่ถูกต้อง").toLowerCase(),
   body("password")
     .isLength({ min: 8 }).withMessage("Password ต้องมีอย่างน้อย 8 ตัวอักษร")
     .matches(/[a-z]/).withMessage("Password ต้องมีตัวพิมพ์เล็ก")

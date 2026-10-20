@@ -91,6 +91,7 @@ VITE_API_URL=http://localhost:3000/api
 - ห้ามใส่ `VITE_` ในค่าลับ เช่น password หรือ JWT secret เพราะค่าที่ขึ้นต้นด้วย `VITE_` จะถูกส่งไปฝั่ง Browser
 - ห้าม commit ไฟล์ `backend/.env` และ `frontend/.env`
 - ถ้าเผลอ push SMTP password หรือ JWT secret ให้เปลี่ยนค่าใหม่ทันที
+- ระบบไม่ใช้ `normalizeEmail()` เพราะอาจลบจุดใน Gmail เช่น `test.user@gmail.com`; ระบบจะเก็บอีเมลเป็น lowercase แต่คงจุดไว้
 
 เว็บร้านขายสินค้า Probiotic พัฒนาด้วย Vue.js, Express.js และ MySQL
 
