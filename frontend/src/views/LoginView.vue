@@ -8,23 +8,23 @@ import { useRouter, RouterLink } from 'vue-router'
 const router = useRouter()
 const auth = useAuthStore()
 
-// username/password คือค่าที่ผู้ใช้กรอก ส่วน loading/error ใช้ควบคุม feedback ระหว่าง request
-const username = ref('')
+// identifier รับได้ทั้ง Username และ Email ส่วน loading/error ใช้ควบคุม feedback ระหว่าง request
+const identifier = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const loading = ref(false)
 const error = ref('')
 
 async function onSubmit() {
-  // ส่ง username/password เข้า Auth Store; สำเร็จแล้ว Store จะเก็บ JWT และ redirect ตาม role
+  // ส่ง Email/Username และ password เข้า Auth Store; สำเร็จแล้ว Store จะเก็บ JWT และ redirect ตาม role
   error.value = ''
-  if (!username.value.trim() || !password.value) {
-    error.value = 'กรุณากรอก Username และ Password'
+  if (!identifier.value.trim() || !password.value) {
+    error.value = 'กรุณากรอก Email/Username และ Password'
     return
   }
   loading.value = true
   try {
-    await auth.login(username.value.trim(), password.value)
+    await auth.login(identifier.value.trim(), password.value)
     router.push(auth.isAdmin ? '/admin/products' : '/')
   } catch (e) {
     error.value = e.response?.data?.message || 'ไม่สามารถเข้าสู่ระบบได้'
@@ -44,8 +44,8 @@ async function onSubmit() {
       <div v-if="error" class="bg-red-50 text-red-600 text-sm rounded p-2">{{ error }}</div>
 
       <div>
-        <label class="block text-sm mb-1">Username</label>
-        <input v-model="username" type="text" autocomplete="username"
+        <label class="block text-sm mb-1">Email หรือ Username</label>
+        <input v-model="identifier" type="text" autocomplete="username email"
           class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" />
       </div>
 

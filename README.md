@@ -208,6 +208,22 @@ Content-Type: application/json
 Authorization: Bearer YOUR_TOKEN
 ```
 
+### Login ด้วย Email หรือ Username
+
+```http
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+```
+
+```json
+{
+  "identifier": "testuser01@example.com",
+  "password": "Test@1234"
+}
+```
+
+ฟิลด์ `identifier` สามารถเปลี่ยนเป็น Username ได้ เช่น `testuser01` โดยใช้ Password เดิม
+
 ### API หลัก
 
 | Method | Endpoint | สิทธิ์ |

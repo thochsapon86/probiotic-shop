@@ -15,9 +15,9 @@ export const useAuthStore = defineStore('auth', {
     hasPendingOrder: (s) => !!s.pendingOrderId,
   },
   actions: {
-    async login(username, password) {
-      // เรียก Login API แล้วเก็บ token/user เพื่อให้ Router และ request อื่นนำไปใช้
-      const { data } = await http.post('/auth/login', { username, password })
+    async login(identifier, password) {
+      // เรียก Login API ด้วย Email/Username แล้วเก็บ token/user ให้ Router และ request อื่นใช้
+      const { data } = await http.post('/auth/login', { identifier, password })
       this.token = data.token
       this.user = data.user
       localStorage.setItem('token', data.token)

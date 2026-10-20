@@ -38,19 +38,22 @@ const loginLimiter = rateLimit({
 router.post(
   '/login',
   loginLimiter,
-  [body('username').trim().notEmpty(), body('password').notEmpty()],
+  [body('password').notEmpty()],
   async (req, res) => {
-    // 1) ตรวจ input 2) ค้นหาผู้ใช้ 3) เทียบ password hash 4) ออก JWT
-    if (!validationResult(req).isEmpty())
-      return res.status(400).json({ message: 'กรุณากรอก Username และ Password' })
+    // รับ identifier เดียวที่รองรับทั้ง username และ email เพื่อไม่ให้ API เดิมที่ส่ง username เสีย
+    const identifier = String(req.body.identifier ?? req.body.username ?? '').trim()
+    const password = req.body.password
+    // 1) ตรวจ input 2) ค้นหาด้วย username/email 3) เทียบ password hash 4) ออก JWT
+    if (!identifier || !password || !validationResult(req).isEmpty())
+      return res.status(400).json({ message: 'กรุณากรอก Email/Username และ Password' })
 
-    const { username, password } = req.body
     try {
-      const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username])
+      // ใช้ parameterized query ป้องกัน SQL Injection และใช้ OR รองรับ login ทั้งสองแบบ
+      const [rows] = await pool.query('SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1', [identifier, identifier])
       const user = rows[0]
       // ใช้ข้อความเดียวกัน ไม่บอกว่าผิดที่ username หรือ password
       const ok = user && (await bcrypt.compare(password, user.password_hash))
-      if (!ok) return res.status(401).json({ message: 'Username หรือ Password ไม่ถูกต้อง' })
+      if (!ok) return res.status(401).json({ message: 'Email/Username หรือ Password ไม่ถูกต้อง' })
 
       const token = jwt.sign(
         { user_id: user.user_id, username: user.username, role: user.role },
